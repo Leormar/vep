@@ -850,16 +850,7 @@ function toggleBody(id){
 // GENERATE
 // ══════════════════════════════════════════════
 async function runGenerate(){
-  // Ask for API key if not set
-  if(!window._apiKey){
-    const key = prompt('🔑 Ingresa tu API Key de Anthropic:\n(empieza con sk-ant-api03-)');
-    if(!key || !key.startsWith('sk-ant-')){ 
-      alert('Clave inválida. Debe empezar con sk-ant-'); 
-      return; 
-    }
-    window._apiKey = key;
-    sessionStorage.setItem('vep_key', key);
-  }
+
   const m=MODULES[curMod];
   const btn=document.getElementById('btn-gen');
   btn.disabled=true;
@@ -922,28 +913,20 @@ function setAg(i,state){
 }
 
 async function callClaude(prompt){
-  const key = window._apiKey;
-  if(!key){ throw new Error('API key no configurada'); }
-  const r=await fetch("https://api.anthropic.com/v1/messages",{
+  // Usa el proxy seguro de Vercel — la API key está en el servidor
+  const r=await fetch("/api/claude",{
     method:"POST",
-    headers:{
-      "Content-Type":"application/json",
-      "x-api-key": key,
-      "anthropic-version":"2023-06-01",
-      "anthropic-dangerous-direct-browser-access":"true"
-    },
+    headers:{"Content-Type":"application/json"},
     body:JSON.stringify({
-      model:"claude-sonnet-4-20250514",
-      max_tokens:1000,
+      prompt,
       system:`Eres asistente clínico especializado en optometría y oftalmología para la práctica Lentesespecializados del Dr. Leonardo Orjuela, Medellín, Colombia.
 Generas documentos clínicos profesionales en español colombiano con terminología precisa.
-El clínico es el responsable legal de toda decisión. Responde ÚNICAMENTE con el documento solicitado, sin introducción ni comentarios adicionales.`,
-      messages:[{role:"user",content:prompt}]
+El clínico es el responsable legal de toda decisión. Responde ÚNICAMENTE con el documento solicitado, sin introducción ni comentarios adicionales.`
     })
   });
   const data=await r.json();
-  if(data.error) throw new Error(data.error.message||'Error API');
-  return data.content?.[0]?.text||'Error generando documento.';
+  if(data.error) throw new Error(data.error);
+  return data.text||'Error generando documento.';
 }
 
 // ══════════════════════════════════════════════
