@@ -1,0 +1,1042 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Virtual Eye Panel — Lentesespecializados</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400;500&family=Instrument+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#0a0f0d; --bg2:#0f1712; --bg3:#141f19;
+  --surface:#1a2820; --surface2:#1f3028;
+  --border:#2a4035; --border2:#335040;
+  --accent:#4ade9a; --accent2:#2db870; --accent3:#1a8050;
+  --amber:#f0b429; --rose:#f87171; --sky:#38bdf8; --violet:#a78bfa;
+  --text:#e8f5ee; --text2:#9dbfac; --text3:#5a8070;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Instrument Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+body::before{content:'';position:fixed;inset:0;
+  background-image:linear-gradient(rgba(74,222,154,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(74,222,154,.025) 1px,transparent 1px);
+  background-size:40px 40px;pointer-events:none;z-index:0;}
+
+/* ── LAYOUT ── */
+.shell{display:flex;min-height:100vh;position:relative;z-index:1;}
+.nav{width:72px;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;align-items:center;padding:16px 0;gap:4px;flex-shrink:0;}
+.nav-logo{font-family:'DM Serif Display',serif;font-size:1.1rem;color:var(--accent);padding:12px 0 20px;border-bottom:1px solid var(--border);width:100%;text-align:center;margin-bottom:8px;}
+.nav-item{width:52px;height:52px;border-radius:10px;border:1px solid transparent;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;transition:all .2s;position:relative;}
+.nav-item:hover{background:var(--surface);border-color:var(--border);}
+.nav-item.active{background:rgba(74,222,154,.1);border-color:var(--accent3);}
+.nav-item .ni{font-size:1.3rem;}
+.nav-item .nl{font-family:'DM Mono',monospace;font-size:.45rem;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);}
+.nav-item.active .nl{color:var(--accent);}
+.nav-sep{width:32px;height:1px;background:var(--border);margin:8px 0;}
+
+.content{flex:1;display:grid;grid-template-columns:340px 1fr;overflow:hidden;height:100vh;}
+.sidebar{background:var(--bg2);border-right:1px solid var(--border);overflow-y:auto;display:flex;flex-direction:column;}
+.main{overflow-y:auto;display:flex;flex-direction:column;}
+
+/* ── MODULE PAGES ── */
+.module-page{display:none;}
+.module-page.active{display:contents;}
+
+/* ── SIDEBAR ── */
+.sb-head{padding:20px 18px 14px;border-bottom:1px solid var(--border);}
+.sb-tag{font-family:'DM Mono',monospace;font-size:.58rem;text-transform:uppercase;letter-spacing:.14em;margin-bottom:5px;}
+.sb-tag.os{color:var(--rose);} .sb-tag.gl{color:var(--sky);} .sb-tag.kc{color:var(--amber);} .sb-tag.ls{color:var(--accent);}
+.sb-head h2{font-family:'DM Serif Display',serif;font-size:1.15rem;color:var(--accent);line-height:1.2;}
+.sb-head p{font-size:.72rem;color:var(--text3);margin-top:3px;}
+
+.fs{padding:14px 18px;border-bottom:1px solid var(--border);}
+.fl{font-family:'DM Mono',monospace;font-size:.58rem;text-transform:uppercase;letter-spacing:.11em;color:var(--text3);margin-bottom:10px;display:flex;align-items:center;gap:7px;}
+.fl::before{content:'';width:14px;height:1px;background:var(--accent3);}
+.field{margin-bottom:8px;}
+.field label{display:block;font-size:.7rem;color:var(--text2);margin-bottom:3px;}
+.field input,.field select,.field textarea{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:5px;padding:7px 9px;color:var(--text);font-family:'Instrument Sans',sans-serif;font-size:.78rem;outline:none;transition:border-color .2s;}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--accent3);}
+.field textarea{resize:vertical;min-height:52px;}
+.field select option{background:var(--bg2);}
+.fr{display:grid;grid-template-columns:1fr 1fr;gap:7px;}
+
+.score-row{display:flex;gap:5px;flex-wrap:wrap;margin-top:3px;}
+.sb-btn{padding:3px 9px;border-radius:3px;border:1px solid var(--border);background:var(--surface);color:var(--text2);font-family:'DM Mono',monospace;font-size:.65rem;cursor:pointer;transition:all .15s;}
+.sb-btn:hover,.sb-btn.on{border-color:var(--accent3);background:var(--surface2);color:var(--accent);}
+
+.cg{display:grid;grid-template-columns:1fr 1fr;gap:5px;}
+.ci{display:flex;align-items:center;gap:5px;font-size:.72rem;color:var(--text2);cursor:pointer;padding:4px 7px;border-radius:4px;border:1px solid transparent;transition:all .15s;}
+.ci:hover{background:var(--surface);border-color:var(--border);}
+.ci.on{color:var(--text);}
+.cb{width:13px;height:13px;flex-shrink:0;border:1px solid var(--border2);border-radius:2px;display:flex;align-items:center;justify-content:center;font-size:.55rem;color:var(--accent);transition:all .15s;}
+.ci.on .cb{background:var(--accent3);border-color:var(--accent);}
+
+.gen-area{padding:16px 18px;margin-top:auto;border-top:1px solid var(--border);}
+.btn-gen{width:100%;background:linear-gradient(135deg,var(--accent3),var(--accent2));border:none;border-radius:7px;padding:12px;color:var(--bg);font-family:'Instrument Sans',sans-serif;font-size:.85rem;font-weight:600;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:7px;}
+.btn-gen:hover{transform:translateY(-1px);box-shadow:0 4px 18px rgba(74,222,154,.3);}
+.btn-gen:disabled{opacity:.5;cursor:not-allowed;transform:none;}
+
+.ag-status{margin-top:10px;display:flex;flex-direction:column;gap:3px;}
+.ag-line{display:flex;align-items:center;gap:7px;font-family:'DM Mono',monospace;font-size:.6rem;color:var(--text3);padding:3px 7px;border-radius:3px;transition:all .3s;}
+.ag-line.run{color:var(--accent);background:rgba(74,222,154,.06);}
+.ag-line.ok{color:var(--text2);}
+.ag-dot{width:5px;height:5px;border-radius:50%;background:var(--border2);flex-shrink:0;transition:background .3s;}
+.ag-line.run .ag-dot{background:var(--accent);animation:bl 1s ease-in-out infinite;}
+.ag-line.ok .ag-dot{background:var(--accent2);}
+@keyframes bl{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* ── MAIN ── */
+.main-head{padding:18px 28px 14px;border-bottom:1px solid var(--border);background:var(--bg2);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.main-head h3{font-family:'DM Serif Display',serif;font-size:1rem;color:var(--text2);}
+.tabs{display:flex;gap:2px;}
+.tab{padding:5px 12px;border-radius:4px;font-family:'DM Mono',monospace;font-size:.6rem;text-transform:uppercase;letter-spacing:.07em;cursor:pointer;color:var(--text3);border:1px solid transparent;transition:all .15s;}
+.tab:hover{color:var(--text2);background:var(--surface);}
+.tab.on{color:var(--accent);background:rgba(74,222,154,.08);border-color:var(--accent3);}
+
+.out-area{flex:1;padding:24px 28px;}
+
+.empty{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;color:var(--text3);}
+.empty-ico{font-size:2.8rem;opacity:.25;}
+.empty p{font-family:'DM Mono',monospace;font-size:.68rem;text-align:center;line-height:1.7;}
+
+/* Classifier bar */
+.cls-bar{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:16px;display:none;}
+.cls-bar.show{display:block;}
+.cls-title{font-family:'DM Mono',monospace;font-size:.58rem;text-transform:uppercase;letter-spacing:.1em;color:var(--text3);margin-bottom:10px;}
+.cls-steps{display:flex;gap:4px;}
+.cs{flex:1;padding:7px 4px;border-radius:4px;text-align:center;font-family:'DM Mono',monospace;font-size:.6rem;border:1px solid var(--border);color:var(--text3);transition:all .2s;}
+.cs.on{border-color:currentColor;background:rgba(255,255,255,.05);}
+.cs .csn{font-size:.9rem;display:block;margin-bottom:2px;}
+
+/* Doc cards */
+.dp{display:none;} .dp.show{display:block;}
+.dc{background:var(--bg2);border:1px solid var(--border);border-radius:10px;margin-bottom:12px;overflow:hidden;}
+.dch{padding:12px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;cursor:pointer;transition:background .15s;}
+.dch:hover{background:var(--surface);}
+.dct{display:flex;align-items:center;gap:9px;font-size:.82rem;font-weight:500;}
+.dbadge{font-family:'DM Mono',monospace;font-size:.56rem;padding:2px 7px;border-radius:2px;text-transform:uppercase;letter-spacing:.07em;}
+.b-ok{background:rgba(74,222,154,.1);color:var(--accent);border:1px solid var(--accent3);}
+.b-gen{background:rgba(240,180,41,.1);color:var(--amber);border:1px solid rgba(240,180,41,.3);}
+.dcb{padding:18px;display:none;}
+.dcb.open{display:block;}
+.doc-txt{font-size:.8rem;color:var(--text2);line-height:1.85;white-space:pre-wrap;}
+.doc-acts{display:flex;gap:7px;margin-top:14px;padding-top:14px;border-top:1px solid var(--border);}
+.btn-act{padding:5px 12px;border-radius:4px;font-family:'DM Mono',monospace;font-size:.62rem;text-transform:uppercase;letter-spacing:.07em;cursor:pointer;transition:all .15s;border:1px solid var(--border2);background:var(--surface);color:var(--text2);}
+.btn-act:hover{border-color:var(--accent3);color:var(--accent);}
+.btn-pdf{border-color:var(--rose);color:var(--rose);background:rgba(248,113,113,.06);}
+.btn-pdf:hover{background:rgba(248,113,113,.12);border-color:var(--rose);}
+
+/* Skeleton */
+.sk{background:linear-gradient(90deg,var(--surface) 25%,var(--surface2) 50%,var(--surface) 75%);background-size:200% 100%;animation:sh 1.5s infinite;border-radius:3px;height:13px;margin-bottom:7px;}
+@keyframes sh{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.sk.w8{width:80%;} .sk.w6{width:60%;} .sk.w4{width:40%;}
+
+/* ── HOME ── */
+.home-page{display:none;flex:1;}
+.home-page.active{display:flex;flex-direction:column;}
+.home-inner{padding:48px 56px;flex:1;}
+.home-inner h1{font-family:'DM Serif Display',serif;font-size:2.4rem;color:var(--accent);margin-bottom:6px;}
+.home-inner .sub{font-size:.85rem;color:var(--text3);margin-bottom:48px;font-family:'DM Mono',monospace;letter-spacing:.08em;}
+.module-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;}
+.mc{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:24px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden;}
+.mc::after{content:'';position:absolute;inset:0;opacity:0;transition:opacity .2s;}
+.mc:hover{transform:translateY(-3px);box-shadow:0 8px 32px rgba(0,0,0,.4);}
+.mc:hover::after{opacity:1;}
+.mc.os{border-color:rgba(248,113,113,.2);} .mc.os::after{background:rgba(248,113,113,.03);}
+.mc.gl{border-color:rgba(56,189,248,.2);} .mc.gl::after{background:rgba(56,189,248,.03);}
+.mc.kc{border-color:rgba(240,180,41,.2);} .mc.kc::after{background:rgba(240,180,41,.03);}
+.mc.ls{border-color:rgba(74,222,154,.2);} .mc.ls::after{background:rgba(74,222,154,.03);}
+.mc .mc-ico{font-size:2rem;margin-bottom:12px;}
+.mc .mc-name{font-family:'DM Serif Display',serif;font-size:1.1rem;margin-bottom:6px;}
+.mc.os .mc-name{color:var(--rose);} .mc.gl .mc-name{color:var(--sky);} .mc.kc .mc-name{color:var(--amber);} .mc.ls .mc-name{color:var(--accent);}
+.mc .mc-desc{font-size:.75rem;color:var(--text3);line-height:1.6;margin-bottom:14px;}
+.mc .mc-agents{display:flex;flex-wrap:wrap;gap:4px;}
+.mc .mc-a{font-family:'DM Mono',monospace;font-size:.58rem;padding:2px 7px;border-radius:2px;background:var(--surface);color:var(--text3);}
+.pareto-note{margin-top:48px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:18px 22px;display:flex;align-items:center;gap:24px;}
+.pn-stat{display:flex;flex-direction:column;gap:2px;flex-shrink:0;}
+.pn-val{font-family:'DM Serif Display',serif;font-size:1.5rem;color:var(--accent);}
+.pn-lbl{font-family:'DM Mono',monospace;font-size:.58rem;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;}
+.pn-div{width:1px;height:36px;background:var(--border);}
+.pn-txt{font-size:.78rem;color:var(--text2);line-height:1.6;}
+
+/* ── PRINT ── */
+@media print {
+  body{background:#fff !important;color:#000 !important;}
+  body::before{display:none;}
+  .shell,.nav,.sidebar,.main-head,.tabs,.doc-acts,.btn-act,.btn-pdf,.cls-bar,.empty,.ag-status,.btn-gen,.gen-area{display:none !important;}
+  .print-area{display:block !important;padding:40px;}
+  .print-doc h1{font-family:Georgia,serif;font-size:18pt;border-bottom:2pt solid #000;padding-bottom:8px;margin-bottom:16px;}
+  .print-doc h2{font-size:12pt;font-family:Georgia,serif;margin:14px 0 6px;color:#333;}
+  .print-doc p,.print-doc .doc-txt{font-size:10pt;line-height:1.8;font-family:'Times New Roman',serif;color:#111;white-space:pre-wrap;}
+  .print-meta{font-size:9pt;color:#666;margin-bottom:20px;font-family:Arial,sans-serif;}
+  .print-sep{border-top:1pt solid #ccc;margin:20px 0;}
+  .page-break{page-break-after:always;}
+}
+.print-area{display:none;}
+
+/* API Key Modal */
+.apikey-modal{position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:999;display:flex;align-items:center;justify-content:center;}
+.apikey-box{background:#0f1712;border:1px solid #2a4035;border-radius:12px;padding:32px;width:420px;max-width:90%;}
+.apikey-box h2{font-family:'DM Serif Display',serif;font-size:1.3rem;color:#4ade9a;margin-bottom:6px;}
+.apikey-box p{font-size:.78rem;color:#9dbfac;line-height:1.6;margin-bottom:20px;}
+.apikey-box input{width:100%;background:#1a2820;border:1px solid #2a4035;border-radius:6px;padding:10px 12px;color:#e8f5ee;font-family:monospace;font-size:.8rem;outline:none;margin-bottom:12px;}
+.apikey-box input:focus{border-color:#1a8050;}
+.apikey-box .btn-ok{width:100%;background:linear-gradient(135deg,#1a8050,#2db870);border:none;border-radius:7px;padding:12px;color:#0a0f0d;font-weight:600;font-size:.9rem;cursor:pointer;}
+.apikey-box .btn-ok:hover{opacity:.9;}
+.apikey-box .note{font-family:'DM Mono',monospace;font-size:.6rem;color:#5a8070;margin-top:10px;text-align:center;line-height:1.5;}
+.apikey-saved{position:fixed;bottom:20px;right:20px;background:#1a8050;color:#e8f5ee;padding:8px 16px;border-radius:6px;font-size:.75rem;font-family:'DM Mono',monospace;z-index:100;animation:fadeout 3s forwards;}
+@keyframes fadeout{0%,70%{opacity:1}100%{opacity:0}}
+</style>
+</head>
+<body>
+<div class="shell">
+
+<!-- NAV -->
+<nav class="nav">
+  <div class="nav-logo">👁️</div>
+  <div class="nav-item active" onclick="goHome(this)" title="Inicio">
+    <div class="ni">🏠</div><div class="nl">Inicio</div>
+  </div>
+  <div class="nav-sep"></div>
+  <div class="nav-item" onclick="goModule('os',this)" title="Ojo Seco">
+    <div class="ni">💧</div><div class="nl">Ojo Seco</div>
+  </div>
+  <div class="nav-item" onclick="goModule('gl',this)" title="Glaucoma">
+    <div class="ni">🔵</div><div class="nl">Glaucoma</div>
+  </div>
+  <div class="nav-item" onclick="goModule('kc',this)" title="Queratocono">
+    <div class="ni">🟡</div><div class="nl">KC</div>
+  </div>
+  <div class="nav-item" onclick="goModule('ls',this)" title="Lente Escleral">
+    <div class="ni">🟢</div><div class="nl">Escleral</div>
+  </div>
+</nav>
+
+<!-- HOME -->
+<div class="home-page active" id="home">
+  <div class="home-inner">
+    <h1>Virtual Eye Panel</h1>
+    <p class="sub">// Sistema Diagnóstico Multiagente · Lentesespecializados · Dr. Leonardo Orjuela</p>
+    <div class="module-grid">
+      <div class="mc os" onclick="goModule('os',null)">
+        <div class="mc-ico">💧</div>
+        <div class="mc-name">Ojo Seco / Superficie Ocular</div>
+        <div class="mc-desc">Clasificación DEWS II · Mediview Images · Meibografía · BUT · Tinción Oxford · Plan escalonado</div>
+        <div class="mc-agents"><span class="mc-a">Hypothesis</span><span class="mc-a">Challenger</span><span class="mc-a">Checklist</span><span class="mc-a">Test Chooser</span><span class="mc-a">Stewardship</span></div>
+      </div>
+      <div class="mc gl" onclick="goModule('gl',null)">
+        <div class="mc-ico">🔵</div>
+        <div class="mc-name">Sospecha Glaucoma / OCT Ambiguo</div>
+        <div class="mc-desc">RNFL · Wedge defect · C/D ratio · Humphrey SITA · GCL+ · Paquimetría · HRT</div>
+        <div class="mc-agents"><span class="mc-a">Hypothesis</span><span class="mc-a">Challenger</span><span class="mc-a">Checklist</span><span class="mc-a">Test Chooser</span><span class="mc-a">Stewardship</span></div>
+      </div>
+      <div class="mc kc" onclick="goModule('kc',null)">
+        <div class="mc-ico">🟡</div>
+        <div class="mc-name">Queratocono / Ectasia Corneal</div>
+        <div class="mc-desc">Pentacam · Belin-Ambrosio · Aberrometría · Estadificación ABCD · Crosslinking · Anillos</div>
+        <div class="mc-agents"><span class="mc-a">Hypothesis</span><span class="mc-a">Challenger</span><span class="mc-a">Checklist</span><span class="mc-a">Test Chooser</span></div>
+      </div>
+      <div class="mc ls" onclick="goModule('ls',null)">
+        <div class="mc-ico">🟢</div>
+        <div class="mc-name">Adaptación Lentes Esclerales</div>
+        <div class="mc-desc">Sagita · Topógrafo · Pentacam · HVID · Bowl · Clearance · Parámetros de fitting</div>
+        <div class="mc-agents"><span class="mc-a">Hypothesis</span><span class="mc-a">Test Chooser</span><span class="mc-a">Stewardship</span><span class="mc-a">Checklist</span></div>
+      </div>
+    </div>
+    <div class="pareto-note">
+      <div class="pn-stat"><span class="pn-val">~80%</span><span class="pn-lbl">Precisión Dx</span></div>
+      <div class="pn-div"></div>
+      <div class="pn-stat"><span class="pn-val">$2K</span><span class="pn-lbl">Pareto óptimo</span></div>
+      <div class="pn-div"></div>
+      <div class="pn-stat"><span class="pn-val">5</span><span class="pn-lbl">Agentes IA</span></div>
+      <div class="pn-div"></div>
+      <div class="pn-txt">Basado en la frontera Pareto MAI-DxO. El sistema multiagente supera a cualquier LLM individual. El clínico es el <strong>validador y decisor final</strong> — responsabilidad legal y ética siempre del profesional.</div>
+    </div>
+  </div>
+</div>
+
+<!-- MODULE CONTAINER -->
+<div class="content" id="module-container" style="display:none;">
+
+<!-- SIDEBAR -->
+<aside class="sidebar" id="sidebar-content"></aside>
+
+<!-- MAIN -->
+<main class="main">
+  <div class="main-head">
+    <h3 id="main-title">Documentos generados</h3>
+    <div class="tabs" id="tabs-row"></div>
+  </div>
+  <div class="out-area" id="out-area">
+    <div class="empty" id="empty-state">
+      <div class="empty-ico" id="empty-ico">👁️</div>
+      <p id="empty-msg">Completa los datos del paciente<br>y presiona <strong style="color:var(--accent)">Generar documentos con IA</strong></p>
+    </div>
+    <div id="cls-bar-container"></div>
+    <div id="docs-container"></div>
+  </div>
+</main>
+
+</div><!-- /content -->
+</div><!-- /shell -->
+
+<!-- PRINT AREA -->
+<div class="print-area" id="print-area"></div>
+
+<script>
+// ══════════════════════════════════════════════
+// MODULE DEFINITIONS
+// ══════════════════════════════════════════════
+const MODULES = {
+
+os: {
+  tag:'💧 Ojo Seco / Superficie Ocular', tagCls:'os',
+  title:'Módulo Ojo Seco', subtitle:'DEWS II · Mediview · Superficie Ocular',
+  emptyIco:'💧',
+  agents:['Hypothesis Agent','Challenger Agent','Checklist Agent','Test Chooser Agent','Generando informe…','Generando remisión…','Generando prescripción LC…','Generando seguimiento…'],
+  tabs:['Informe','Remisión','Lente','Seguimiento'],
+  docs:['informe','remision','lente','seguimiento'],
+  docLabels:['📋 Informe Clínico','📩 Carta de Remisión','👁️ Prescripción LC','📅 Plan de Seguimiento'],
+  classifier: {
+    title:'Clasificación DEWS II — Escalonamiento terapéutico',
+    steps:['1\nLubricantes\nHigiene palpebral','2\nCiclosporina\nOmega-3 · IPL','3\nSuero autólogo\nLC terapéutica','4\nTapones\nCirugía palpebral']
+  },
+  sidebar: `
+  <div class="fs"><div class="fl">Datos del paciente</div>
+    <div class="fr"><div class="field"><label>Nombre</label><input id="f-nombre" placeholder="Nombre completo"></div>
+    <div class="field"><label>Edad</label><input id="f-edad" type="number" placeholder="años"></div></div>
+    <div class="fr"><div class="field"><label>Sexo</label><select id="f-sexo"><option value="">—</option><option>Femenino</option><option>Masculino</option></select></div>
+    <div class="field"><label>Fecha</label><input id="f-fecha" type="date"></div></div>
+  </div>
+  <div class="fs"><div class="fl">Síntomas &amp; OSDI</div>
+    <div class="fr"><div class="field"><label>OSDI (0–100)</label><input id="f-osdi" type="number" placeholder="ej. 42"></div>
+    <div class="field"><label>Severidad</label><div class="score-row">
+      <button class="sb-btn" onclick="pick('f-sev','Leve',this)">Leve</button>
+      <button class="sb-btn" onclick="pick('f-sev','Moderado',this)">Mod</button>
+      <button class="sb-btn" onclick="pick('f-sev','Severo',this)">Sev</button>
+    </div><input type="hidden" id="f-sev"></div></div>
+    <div class="field"><label>Síntomas</label><div class="cg">
+      <label class="ci" onclick="tog(this)"><div class="cb">✓</div>Ardor</label>
+      <label class="ci" onclick="tog(this)"><div class="cb">✓</div>Epífora</label>
+      <label class="ci" onclick="tog(this)"><div class="cb">✓</div>Fotofobia</label>
+      <label class="ci" onclick="tog(this)"><div class="cb">✓</div>Visión fluctuante</label>
+      <label class="ci" onclick="tog(this)"><div class="cb">✓</div>C. extraño</label>
+      <label class="ci" onclick="tog(this)"><div class="cb">✓</div>Prurito</label>
+    </div></div>
+  </div>
+  <div class="fs"><div class="fl">Mediview &amp; Biomicroscopía</div>
+    <div class="fr"><div class="field"><label>BUT OD (s)</label><input id="f-butOD" type="number" step="0.5"></div>
+    <div class="field"><label>BUT OI (s)</label><input id="f-butOI" type="number" step="0.5"></div></div>
+    <div class="field"><label>Meibografía</label><div class="score-row">
+      <button class="sb-btn" onclick="pick('f-meibo','Grado 0',this)">G0</button>
+      <button class="sb-btn" onclick="pick('f-meibo','Grado I',this)">GI</button>
+      <button class="sb-btn" onclick="pick('f-meibo','Grado II',this)">GII</button>
+      <button class="sb-btn" onclick="pick('f-meibo','Grado III',this)">GIII</button>
+    </div><input type="hidden" id="f-meibo"></div>
+    <div class="field"><label>Tinción Oxford</label><div class="score-row">
+      <button class="sb-btn" onclick="pick('f-tinc','0',this)">0</button>
+      <button class="sb-btn" onclick="pick('f-tinc','I',this)">I</button>
+      <button class="sb-btn" onclick="pick('f-tinc','II',this)">II</button>
+      <button class="sb-btn" onclick="pick('f-tinc','III',this)">III</button>
+      <button class="sb-btn" onclick="pick('f-tinc','IV',this)">IV</button>
+      <button class="sb-btn" onclick="pick('f-tinc','V',this)">V</button>
+    </div><input type="hidden" id="f-tinc"></div>
+    <div class="fr"><div class="field"><label>Schirmer OD (mm)</label><input id="f-schOD" type="number"></div>
+    <div class="field"><label>Schirmer OI (mm)</label><input id="f-schOI" type="number"></div></div>
+    <div class="field"><label>Calidad meibum</label><div class="score-row">
+      <button class="sb-btn" onclick="pick('f-meibum','Claro',this)">Claro</button>
+      <button class="sb-btn" onclick="pick('f-meibum','Turbio',this)">Turbio</button>
+      <button class="sb-btn" onclick="pick('f-meibum','Espeso',this)">Espeso</button>
+      <button class="sb-btn" onclick="pick('f-meibum','Ausente',this)">Ausente</button>
+    </div><input type="hidden" id="f-meibum"></div>
+  </div>
+  <div class="fs"><div class="fl">Factores contribuyentes</div><div class="cg">
+    <label class="ci" onclick="tog(this)"><div class="cb">✓</div>Uso LC</label>
+    <label class="ci" onclick="tog(this)"><div class="cb">✓</div>Rosacea</label>
+    <label class="ci" onclick="tog(this)"><div class="cb">✓</div>Alergia</label>
+    <label class="ci" onclick="tog(this)"><div class="cb">✓</div>Menopausia</label>
+    <label class="ci" onclick="tog(this)"><div class="cb">✓</div>Antihistamínicos</label>
+    <label class="ci" onclick="tog(this)"><div class="cb">✓</div>Pantalla >6h</label>
+    <label class="ci" onclick="tog(this)"><div class="cb">✓</div>Post-LASIK</label>
+    <label class="ci" onclick="tog(this)"><div class="cb">✓</div>Sjögren</label>
+  </div></div>
+  <div class="fs"><div class="fl">Clasificación &amp; Lente</div>
+    <div class="field"><label>DEWS II subtipo</label><select id="f-subtipo">
+      <option value="">— Seleccionar —</option>
+      <option>Evaporativo (MGD)</option><option>Acuodeficiente</option>
+      <option>Mixto</option><option>Neurotrófico</option>
+    </select></div>
+    <div class="field"><label>Lente terapéutica</label><select id="f-lente">
+      <option value="">— No aplica —</option>
+      <option>Lente escleral terapéutica</option><option>Lente blanda hidrofílica</option>
+      <option>Lente bandage</option>
+    </select></div>
+    <div class="fr"><div class="field"><label>Diámetro (mm)</label><input id="f-diam" placeholder="16.5"></div>
+    <div class="field"><label>Sagita (µm)</label><input id="f-sag" placeholder="4200"></div></div>
+    <div class="field"><label>Notas clínicas</label><textarea id="f-notas" placeholder="Hallazgos, tratamientos previos…"></textarea></div>
+  </div>`,
+  getData: () => ({
+    nombre: v('f-nombre')||'Paciente', edad: v('f-edad')||'N/D', sexo: v('f-sexo')||'N/D',
+    fecha: v('f-fecha')||today(), osdi: v('f-osdi')||'N/D', sev: v('f-sev')||'N/D',
+    sintomas: getCI(), butOD: v('f-butOD')||'N/D', butOI: v('f-butOI')||'N/D',
+    meibo: v('f-meibo')||'N/D', tinc: v('f-tinc')||'N/D',
+    schOD: v('f-schOD')||'N/D', schOI: v('f-schOI')||'N/D',
+    meibum: v('f-meibum')||'N/D', subtipo: v('f-subtipo')||'N/D',
+    lente: v('f-lente')||'', diam: v('f-diam')||'', sag: v('f-sag')||'',
+    notas: v('f-notas')||''
+  }),
+  dataStr: d => `Paciente: ${d.nombre}, ${d.edad}a, ${d.sexo} | Fecha: ${d.fecha}
+OSDI: ${d.osdi}/100 (${d.sev}) | Síntomas: ${d.sintomas}
+BUT OD: ${d.butOD}s / OI: ${d.butOI}s | Meibografía: ${d.meibo} | Tinción Oxford: ${d.tinc}
+Schirmer OD: ${d.schOD}mm / OI: ${d.schOI}mm | Meibum: ${d.meibum}
+DEWS II: ${d.subtipo} | Lente: ${d.lente} ${d.diam}mm ${d.sag}µm
+Notas: ${d.notas}`,
+  clsLevel: d => {
+    let l=1; const o=parseInt(d.osdi)||0, b=parseFloat(d.butOD)||10;
+    if(o>22||b<10)l=2; if(o>32||b<5)l=3; if(d.subtipo&&d.subtipo.includes('eurotrófico'))l=4; return l;
+  },
+  prompts: (ds, d) => ({
+    informe:`Genera un INFORME CLÍNICO ESTRUCTURADO de ojo seco para la práctica Lentesespecializados.
+Secciones: MOTIVO DE CONSULTA | ANAMNESIS | HALLAZGOS CLÍNICOS | ANÁLISIS MULTIAGENTE (Hypothesis/Challenger/Checklist) | DIAGNÓSTICO DEWS II | PLAN DE MANEJO ESCALONADO | FIRMA
+Datos: ${ds}
+Firma: Dr. Leonardo Orjuela — Optómetra Especialista en Contactología | Lentesespecializados | Medellín, Colombia`,
+    remision:`Genera una CARTA DE REMISIÓN formal a especialista en Superficie Ocular.
+Incluye: encabezado, motivo de remisión, resumen clínico, hallazgos clave, Dx actual, pregunta clínica concreta al especialista.
+Máx 280 palabras. Tono profesional.
+Datos: ${ds}
+Remite: Dr. Leonardo Orjuela | Lentesespecializados | Medellín`,
+    lente:`Genera PRESCRIPCIÓN FORMAL DE LENTE TERAPÉUTICA para ojo seco.
+Incluye: indicación, parámetros (tipo, diámetro, sagita, material, Dk, solución relleno), instrucciones uso/mantenimiento, precauciones, criterios de éxito.
+${d.lente?`Tipo indicado: ${d.lente}`:'Recomienda el tipo según datos clínicos.'}
+Datos: ${ds}
+Prescribe: Dr. Leonardo Orjuela | Lentesespecializados`,
+    seguimiento:`Genera PLAN DE SEGUIMIENTO con cronograma de controles desde ${new Date().toLocaleDateString('es-CO',{day:'numeric',month:'long',year:'numeric'})}.
+Incluye controles a 2sem/1mes/3m/6m/1año con objetivos, qué evaluar, criterios para escalar, señales de alarma, instrucciones al paciente, metas a 3 meses.
+Datos: ${ds}`
+  })
+},
+
+gl: {
+  tag:'🔵 Sospecha Glaucoma / OCT Ambiguo', tagCls:'gl',
+  title:'Módulo Glaucoma', subtitle:'OCT RNFL · Humphrey · Presión ocular',
+  emptyIco:'🔵',
+  agents:['Hypothesis Agent','Challenger Agent','Checklist Agent','Test Chooser Agent','Generando informe…','Generando remisión…','Generando plan manejo…','Generando seguimiento…'],
+  tabs:['Informe','Remisión','Plan Manejo','Seguimiento'],
+  docs:['informe','remision','manejo','seguimiento'],
+  docLabels:['📋 Informe Clínico','📩 Carta de Remisión','🎯 Plan de Manejo','📅 Plan de Seguimiento'],
+  classifier: {
+    title:'Clasificación Glaucoma — Estadio (Hodapp-Parrish-Anderson)',
+    steps:['Sospechoso\nHTO / disco\nsospechoso','Incipiente\nMD > -6dB\nRNFL limítrofe','Moderado\nMD -6 a -12dB\ndefecto camp','Avanzado\nMD < -12dB\nriesgo fijación']
+  },
+  sidebar:`
+  <div class="fs"><div class="fl">Datos del paciente</div>
+    <div class="fr"><div class="field"><label>Nombre</label><input id="f-nombre" placeholder="Nombre completo"></div>
+    <div class="field"><label>Edad</label><input id="f-edad" type="number" placeholder="años"></div></div>
+    <div class="fr"><div class="field"><label>Sexo</label><select id="f-sexo"><option value="">—</option><option>Femenino</option><option>Masculino</option></select></div>
+    <div class="field"><label>Fecha</label><input id="f-fecha" type="date"></div></div>
+  </div>
+  <div class="fs"><div class="fl">Presión &amp; Estructura</div>
+    <div class="fr"><div class="field"><label>PIO OD (mmHg)</label><input id="f-pioOD" type="number" placeholder="ej. 22"></div>
+    <div class="field"><label>PIO OI (mmHg)</label><input id="f-pioOI" type="number" placeholder="ej. 20"></div></div>
+    <div class="fr"><div class="field"><label>CCT OD (µm)</label><input id="f-cctOD" type="number" placeholder="ej. 540"></div>
+    <div class="field"><label>CCT OI (µm)</label><input id="f-cctOI" type="number" placeholder="ej. 535"></div></div>
+    <div class="fr"><div class="field"><label>C/D OD</label><input id="f-cdOD" placeholder="ej. 0.6"></div>
+    <div class="field"><label>C/D OI</label><input id="f-cdOI" placeholder="ej. 0.5"></div></div>
+    <div class="field"><label>Gonioscopia</label><div class="score-row">
+      <button class="sb-btn" onclick="pick('f-gonio','Ángulo abierto',this)">Abierto</button>
+      <button class="sb-btn" onclick="pick('f-gonio','Ángulo estrecho',this)">Estrecho</button>
+      <button class="sb-btn" onclick="pick('f-gonio','No realizada',this)">N/R</button>
+    </div><input type="hidden" id="f-gonio"></div>
+  </div>
+  <div class="fs"><div class="fl">OCT Nervio Óptico &amp; RNFL</div>
+    <div class="field"><label>Hallazgo principal OCT</label><select id="f-oct">
+      <option value="">— Seleccionar —</option>
+      <option>RNFL dentro de límites normales</option>
+      <option>Adelgazamiento sectorial inferior</option>
+      <option>Adelgazamiento sectorial superior</option>
+      <option>Wedge defect inferotemporal</option>
+      <option>Adelgazamiento difuso RNFL</option>
+      <option>Excavación aumentada</option>
+    </select></div>
+    <div class="fr"><div class="field"><label>SSI (calidad señal)</label><input id="f-ssi" type="number" placeholder="≥7 adecuado"></div>
+    <div class="field"><label>GCL+ (µm)</label><input id="f-gcl" placeholder="valor µm"></div></div>
+    <div class="field"><label>Observación OCT</label><textarea id="f-octNota" placeholder="Artefactos, asimetría, patrón…"></textarea></div>
+  </div>
+  <div class="fs"><div class="fl">Campimetría Humphrey</div>
+    <div class="field"><label>Campo visual realizado</label><div class="score-row">
+      <button class="sb-btn" onclick="pick('f-cv','SITA Standard 24-2',this)">24-2</button>
+      <button class="sb-btn" onclick="pick('f-cv','SITA Fast 24-2',this)">Fast</button>
+      <button class="sb-btn" onclick="pick('f-cv','No realizado',this)">N/R</button>
+    </div><input type="hidden" id="f-cv"></div>
+    <div class="fr"><div class="field"><label>MD (dB)</label><input id="f-md" placeholder="ej. -2.4"></div>
+    <div class="field"><label>PSD (dB)</label><input id="f-psd" placeholder="ej. 3.1"></div></div>
+    <div class="field"><label>Confiabilidad</label><div class="score-row">
+      <button class="sb-btn" onclick="pick('f-conf','Confiable',this)">Confiable</button>
+      <button class="sb-btn" onclick="pick('f-conf','Borderline',this)">Border</button>
+      <button class="sb-btn" onclick="pick('f-conf','No confiable',this)">No conf.</button>
+    </div><input type="hidden" id="f-conf"></div>
+    <div class="field"><label>Patrón de defecto</label><textarea id="f-patron" placeholder="Escotoma paracentral, depresión difusa…"></textarea></div>
+  </div>
+  <div class="fs"><div class="fl">Antecedentes &amp; Factores de riesgo</div><div class="cg">
+    <label class="ci" onclick="tog(this)"><div class="cb">✓</div>AHF glaucoma</label>
+    <label class="ci" onclick="tog(this)"><div class="cb">✓</div>Miopía alta</label>
+    <label class="ci" onclick="tog(this)"><div class="cb">✓</div>Corticoides tópicos</label>
+    <label class="ci" onclick="tog(this)"><div class="cb">✓</div>Pseudoexfoliación</label>
+    <label class="ci" onclick="tog(this)"><div class="cb">✓</div>Diabetes</label>
+    <label class="ci" onclick="tog(this)"><div class="cb">✓</div>HTA</label>
+    <label class="ci" onclick="tog(this)"><div class="cb">✓</div>Migraña</label>
+    <label class="ci" onclick="tog(this)"><div class="cb">✓</div>Vasoespasmo</label>
+  </div>
+    <div class="field" style="margin-top:8px"><label>Notas clínicas</label><textarea id="f-notas" placeholder="Observaciones, tratamiento previo…"></textarea></div>
+  </div>`,
+  getData: () => ({
+    nombre:v('f-nombre')||'Paciente', edad:v('f-edad')||'N/D', sexo:v('f-sexo')||'N/D', fecha:v('f-fecha')||today(),
+    pioOD:v('f-pioOD')||'N/D', pioOI:v('f-pioOI')||'N/D', cctOD:v('f-cctOD')||'N/D', cctOI:v('f-cctOI')||'N/D',
+    cdOD:v('f-cdOD')||'N/D', cdOI:v('f-cdOI')||'N/D', gonio:v('f-gonio')||'N/D',
+    oct:v('f-oct')||'N/D', ssi:v('f-ssi')||'N/D', gcl:v('f-gcl')||'N/D', octNota:v('f-octNota')||'',
+    cv:v('f-cv')||'N/D', md:v('f-md')||'N/D', psd:v('f-psd')||'N/D', conf:v('f-conf')||'N/D', patron:v('f-patron')||'',
+    factores:getCI(), notas:v('f-notas')||''
+  }),
+  dataStr: d=>`Paciente: ${d.nombre}, ${d.edad}a, ${d.sexo} | Fecha: ${d.fecha}
+PIO OD: ${d.pioOD} / OI: ${d.pioOI} mmHg | CCT OD: ${d.cctOD} / OI: ${d.cctOI} µm
+C/D OD: ${d.cdOD} / OI: ${d.cdOI} | Gonioscopia: ${d.gonio}
+OCT RNFL: ${d.oct} | SSI: ${d.ssi} | GCL+: ${d.gcl}µm | Obs: ${d.octNota}
+Campimetría: ${d.cv} | MD: ${d.md}dB | PSD: ${d.psd}dB | Confiabilidad: ${d.conf}
+Patrón: ${d.patron} | Factores de riesgo: ${d.factores} | Notas: ${d.notas}`,
+  clsLevel: d=>{
+    const md=parseFloat(d.md)||0;
+    if(md>-2)return 1; if(md>-6)return 1; if(md>-12)return 2; if(md>-18)return 3; return 4;
+  },
+  prompts:(ds,d)=>({
+    informe:`Genera INFORME CLÍNICO ESTRUCTURADO de sospecha de glaucoma / OCT ambiguo para Lentesespecializados.
+Secciones: MOTIVO DE CONSULTA | ANAMNESIS Y FACTORES RIESGO | HALLAZGOS (PIO, OCT RNFL, GCL+, campimetría) | ANÁLISIS MULTIAGENTE (Hypothesis/Challenger/Checklist) | DIAGNÓSTICO DIFERENCIAL Y ESTADIO | PLAN DE MANEJO | FIRMA
+Datos: ${ds}
+Firma: Dr. Leonardo Orjuela — Optómetra Especialista | Lentesespecializados | Medellín, Colombia`,
+    remision:`CARTA DE REMISIÓN a glaucomatología / oftalmología.
+Incluye: motivo, resumen hallazgos OCT y campo visual, diagnóstico presuntivo, pregunta clínica concreta al especialista. Máx 280 palabras.
+Datos: ${ds}
+Remite: Dr. Leonardo Orjuela | Lentesespecializados | Medellín`,
+    manejo:`PLAN DE MANEJO para sospecha de glaucoma.
+Incluye: ¿iniciar hipotensores? (criterios), objetivo PIO, seguimiento OCT y campimetría, educación al paciente, cuándo escalar a cirugía.
+Datos: ${ds}`,
+    seguimiento:`PLAN DE SEGUIMIENTO cronológico desde ${new Date().toLocaleDateString('es-CO',{day:'numeric',month:'long',year:'numeric'})}.
+Controles a 1m/3m/6m/1a con objetivos. Criterios de progresión. Señales de alarma. Instrucciones paciente.
+Datos: ${ds}`
+  })
+},
+
+kc: {
+  tag:'🟡 Queratocono / Ectasia Corneal', tagCls:'kc',
+  title:'Módulo Queratocono', subtitle:'Pentacam · Belin-Ambrosio · Estadificación',
+  emptyIco:'🟡',
+  agents:['Hypothesis Agent','Challenger Agent','Checklist Agent','Test Chooser Agent','Generando informe…','Generando remisión…','Generando plan quirúrgico…','Generando seguimiento…'],
+  tabs:['Informe','Remisión','Plan Qx','Seguimiento'],
+  docs:['informe','remision','qx','seguimiento'],
+  docLabels:['📋 Informe Clínico','📩 Carta de Remisión','🔬 Plan Quirúrgico/Óptico','📅 Plan de Seguimiento'],
+  classifier:{
+    title:'Estadificación ABCD (Belin) / Amsler-Krumeich',
+    steps:['Forme fruste\nSubclínico\nAsimetría','KC grado I\nKmax <48D\nVisión buena','KC grado II-III\nKmax 48-55D\nLC indicada','KC grado IV\nKmax >55D\nTrasplante']
+  },
+  sidebar:`
+  <div class="fs"><div class="fl">Datos del paciente</div>
+    <div class="fr"><div class="field"><label>Nombre</label><input id="f-nombre" placeholder="Nombre completo"></div>
+    <div class="field"><label>Edad</label><input id="f-edad" type="number" placeholder="años"></div></div>
+    <div class="fr"><div class="field"><label>Sexo</label><select id="f-sexo"><option value="">—</option><option>Femenino</option><option>Masculino</option></select></div>
+    <div class="field"><label>Fecha</label><input id="f-fecha" type="date"></div></div>
+  </div>
+  <div class="fs"><div class="fl">Pentacam / Topografía</div>
+    <div class="fr"><div class="field"><label>Kmax OD (D)</label><input id="f-kmaxOD" placeholder="ej. 52.4"></div>
+    <div class="field"><label>Kmax OI (D)</label><input id="f-kmaxOI" placeholder="ej. 44.1"></div></div>
+    <div class="fr"><div class="field"><label>K1 OD</label><input id="f-k1OD" placeholder="ej. 46.2"></div>
+    <div class="field"><label>K2 OD</label><input id="f-k2OD" placeholder="ej. 49.8"></div></div>
+    <div class="fr"><div class="field"><label>Paquimetría OD (µm)</label><input id="f-paqOD" placeholder="ej. 430"></div>
+    <div class="field"><label>Paquimetría OI (µm)</label><input id="f-paqOI" placeholder="ej. 490"></div></div>
+    <div class="field"><label>Belin-Ambrosio (BAD-D)</label><div class="score-row">
+      <button class="sb-btn" onclick="pick('f-bad','Normal (<1.6)',this)">Normal</button>
+      <button class="sb-btn" onclick="pick('f-bad','Borderline (1.6-2.5)',this)">Border</button>
+      <button class="sb-btn" onclick="pick('f-bad','Positivo (>2.5)',this)">Positivo</button>
+    </div><input type="hidden" id="f-bad"></div>
+    <div class="field"><label>Elevación posterior (µm sobre BFS)</label><input id="f-elev" placeholder="ej. +18"></div>
+  </div>
+  <div class="fs"><div class="fl">Refracción &amp; AV</div>
+    <div class="fr"><div class="field"><label>AV sc OD</label><input id="f-avOD" placeholder="ej. 20/40"></div>
+    <div class="field"><label>AV sc OI</label><input id="f-avOI" placeholder="ej. 20/20"></div></div>
+    <div class="field"><label>Refracción OD (esf / cil / eje)</label><input id="f-rxOD" placeholder="ej. -3.00 / -2.50 x 170"></div>
+    <div class="field"><label>Refracción OI</label><input id="f-rxOI" placeholder="ej. -1.00 / -0.75 x 15"></div>
+    <div class="field"><label>Aberrometría (si disponible)</label><textarea id="f-aber" placeholder="RMS total, coma, trefoil…"></textarea></div>
+  </div>
+  <div class="fs"><div class="fl">Factores &amp; Antecedentes</div><div class="cg">
+    <label class="ci" onclick="tog(this)"><div class="cb">✓</div>Frotamiento ocular</label>
+    <label class="ci" onclick="tog(this)"><div class="cb">✓</div>Atopia/alergia</label>
+    <label class="ci" onclick="tog(this)"><div class="cb">✓</div>AHF KC</label>
+    <label class="ci" onclick="tog(this)"><div class="cb">✓</div>Síndrome Down</label>
+    <label class="ci" onclick="tog(this)"><div class="cb">✓</div>Post-LASIK</label>
+    <label class="ci" onclick="tog(this)"><div class="cb">✓</div>Progresión documentada</label>
+    <label class="ci" onclick="tog(this)"><div class="cb">✓</div>Anillos previos</label>
+    <label class="ci" onclick="tog(this)"><div class="cb">✓</div>CXL previo</label>
+  </div>
+    <div class="field" style="margin-top:8px"><label>Estadio clínico estimado</label><select id="f-estadio">
+      <option value="">— Seleccionar —</option>
+      <option>Forme fruste / subclínico</option><option>KC Grado I</option>
+      <option>KC Grado II</option><option>KC Grado III</option><option>KC Grado IV / Hidrops</option>
+    </select></div>
+    <div class="field"><label>Notas</label><textarea id="f-notas" placeholder="Progresión, tratamiento previo…"></textarea></div>
+  </div>`,
+  getData:()=>({
+    nombre:v('f-nombre')||'Paciente', edad:v('f-edad')||'N/D', sexo:v('f-sexo')||'N/D', fecha:v('f-fecha')||today(),
+    kmaxOD:v('f-kmaxOD')||'N/D', kmaxOI:v('f-kmaxOI')||'N/D', k1OD:v('f-k1OD')||'N/D', k2OD:v('f-k2OD')||'N/D',
+    paqOD:v('f-paqOD')||'N/D', paqOI:v('f-paqOI')||'N/D', bad:v('f-bad')||'N/D', elev:v('f-elev')||'N/D',
+    avOD:v('f-avOD')||'N/D', avOI:v('f-avOI')||'N/D', rxOD:v('f-rxOD')||'N/D', rxOI:v('f-rxOI')||'N/D', aber:v('f-aber')||'',
+    estadio:v('f-estadio')||'N/D', factores:getCI(), notas:v('f-notas')||''
+  }),
+  dataStr:d=>`Paciente: ${d.nombre}, ${d.edad}a, ${d.sexo} | Fecha: ${d.fecha}
+Kmax OD: ${d.kmaxOD}D / OI: ${d.kmaxOI}D | K1/K2 OD: ${d.k1OD}/${d.k2OD}D
+Paquimetría OD: ${d.paqOD}µm / OI: ${d.paqOI}µm | Elevación posterior: ${d.elev}µm
+Belin-Ambrosio BAD-D: ${d.bad} | Aberrometría: ${d.aber}
+AV OD: ${d.avOD} / OI: ${d.avOI} | Rx OD: ${d.rxOD} | Rx OI: ${d.rxOI}
+Estadio: ${d.estadio} | Factores: ${d.factores} | Notas: ${d.notas}`,
+  clsLevel:d=>{
+    const km=parseFloat(d.kmaxOD)||44;
+    if(km<45)return 1; if(km<48)return 1; if(km<54)return 2; if(km<58)return 3; return 4;
+  },
+  prompts:(ds,d)=>({
+    informe:`INFORME CLÍNICO ESTRUCTURADO de queratocono / ectasia corneal para Lentesespecializados.
+Secciones: MOTIVO | ANAMNESIS Y FACTORES | HALLAZGOS (Pentacam, BAD-D, topografía, refracción) | ANÁLISIS MULTIAGENTE (Hypothesis/Challenger/Checklist) | ESTADIFICACIÓN ABCD | PLAN DE MANEJO ÓPTICO Y QUIRÚRGICO | FIRMA
+Datos: ${ds}
+Firma: Dr. Leonardo Orjuela — Optómetra Especialista | Lentesespecializados | Medellín`,
+    remision:`CARTA DE REMISIÓN a córnea / cirugía refractiva.
+Motivo de remisión, hallazgos Pentacam clave, estadio, pregunta concreta al especialista (¿CXL? ¿Anillos? ¿Trasplante?). Máx 280 palabras.
+Datos: ${ds}
+Remite: Dr. Leonardo Orjuela | Lentesespecializados`,
+    qx:`PLAN TERAPÉUTICO ESCALONADO para queratocono.
+Incluye: opción óptica (LC RPG / escleral), criterios para CXL (edad, progresión, paquimetría mínima), anillos intracorneales (indicación, tipo), queratoplastia (criterios DALK vs PK), seguimiento post-procedimiento.
+Datos: ${ds}`,
+    seguimiento:`PLAN DE SEGUIMIENTO cronológico desde ${new Date().toLocaleDateString('es-CO',{day:'numeric',month:'long',year:'numeric'})}.
+Controles Pentacam a 3m/6m/1a. Criterios de progresión. Cuándo urgenciar. Instrucciones al paciente (no frotar, alergia).
+Datos: ${ds}`
+  })
+},
+
+ls: {
+  tag:'🟢 Adaptación Lentes Esclerales', tagCls:'ls',
+  title:'Módulo Lentes Esclerales', subtitle:'Sagita · Bowl · Clearance · Fitting',
+  emptyIco:'🟢',
+  agents:['Hypothesis Agent','Test Chooser Agent','Stewardship Agent','Checklist Agent','Generando informe…','Generando protocolo fitting…','Generando prescripción…','Generando seguimiento…'],
+  tabs:['Informe','Protocolo Fitting','Prescripción','Seguimiento'],
+  docs:['informe','fitting','prescripcion','seguimiento'],
+  docLabels:['📋 Informe Clínico','🔧 Protocolo de Fitting','👁️ Prescripción Final','📅 Plan de Seguimiento'],
+  classifier:{
+    title:'Indicación de Lente Escleral — Complejidad',
+    steps:['Ojo seco\nsevero\nSuperficie irregular','Córnea irregular\nKC / Post-Qx\nAmetropía alta','Ectasia avanzada\nGrado III-IV\nPost-CXL/anillos','Anoftalmia /\nfácico/pseudof.\nComplejidad máx']
+  },
+  sidebar:`
+  <div class="fs"><div class="fl">Datos del paciente</div>
+    <div class="fr"><div class="field"><label>Nombre</label><input id="f-nombre" placeholder="Nombre completo"></div>
+    <div class="field"><label>Edad</label><input id="f-edad" type="number" placeholder="años"></div></div>
+    <div class="fr"><div class="field"><label>Sexo</label><select id="f-sexo"><option value="">—</option><option>Femenino</option><option>Masculino</option></select></div>
+    <div class="field"><label>Fecha</label><input id="f-fecha" type="date"></div></div>
+    <div class="field"><label>Indicación principal</label><select id="f-indicacion">
+      <option value="">— Seleccionar —</option>
+      <option>Queratocono / ectasia</option><option>Post-LASIK / post-PRK</option>
+      <option>Ojo seco severo</option><option>Distrofia corneal</option>
+      <option>Post-trasplante corneal</option><option>Irregularidad post-infecciosa</option>
+      <option>Afaquia / pseudofaquia</option>
+    </select></div>
+  </div>
+  <div class="fs"><div class="fl">Medidas corneales</div>
+    <div class="fr"><div class="field"><label>HVID OD (mm)</label><input id="f-hvidOD" placeholder="ej. 11.8"></div>
+    <div class="field"><label>HVID OI (mm)</label><input id="f-hvidOI" placeholder="ej. 12.0"></div></div>
+    <div class="fr"><div class="field"><label>Sagita corneal OD (µm)</label><input id="f-sagCornOD" placeholder="ej. 3800"></div>
+    <div class="field"><label>Sagita corneal OI (µm)</label><input id="f-sagCornOI" placeholder="ej. 3750"></div></div>
+    <div class="fr"><div class="field"><label>Kmax OD (D)</label><input id="f-kmaxOD" placeholder="ej. 52.4"></div>
+    <div class="field"><label>Kmax OI (D)</label><input id="f-kmaxOI" placeholder="ej. 44.1"></div></div>
+    <div class="field"><label>Superficie ocular previa</label><div class="score-row">
+      <button class="sb-btn" onclick="pick('f-sup','Buena',this)">Buena</button>
+      <button class="sb-btn" onclick="pick('f-sup','Regular',this)">Regular</button>
+      <button class="sb-btn" onclick="pick('f-sup','Comprometida',this)">Comprometida</button>
+    </div><input type="hidden" id="f-sup"></div>
+  </div>
+  <div class="fs"><div class="fl">Parámetros prueba inicial</div>
+    <div class="field"><label>Tipo de lente escleral</label><select id="f-tipolc">
+      <option value="">— Seleccionar —</option>
+      <option>Mini-escleral (15–18mm)</option><option>Escleral estándar (18–22mm)</option>
+      <option>Mega-escleral (>22mm)</option>
+    </select></div>
+    <div class="fr"><div class="field"><label>Diámetro total (mm)</label><input id="f-diam" placeholder="ej. 16.5"></div>
+    <div class="field"><label>Sagita lente (µm)</label><input id="f-sag" placeholder="ej. 4200"></div></div>
+    <div class="fr"><div class="field"><label>Power (D)</label><input id="f-power" placeholder="ej. -4.50"></div>
+    <div class="field"><label>Cilindro (D)</label><input id="f-cil" placeholder="ej. -1.25"></div></div>
+    <div class="field"><label>Clearance corneal observado</label><div class="score-row">
+      <button class="sb-btn" onclick="pick('f-clear','Adecuado (200-300µm)',this)">Adecuado</button>
+      <button class="sb-btn" onclick="pick('f-clear','Excesivo (>400µm)',this)">Excesivo</button>
+      <button class="sb-btn" onclick="pick('f-clear','Insuficiente (<100µm)',this)">Insuficiente</button>
+    </div><input type="hidden" id="f-clear"></div>
+  </div>
+  <div class="fs"><div class="fl">Evaluación con lente puesta</div>
+    <div class="field"><label>AV con lente escleral</label><div class="fr">
+      <input id="f-avlcOD" placeholder="AV OD"><input id="f-avlcOI" placeholder="AV OI">
+    </div></div>
+    <div class="field"><label>Zona de apoyo escleral</label><div class="score-row">
+      <button class="sb-btn" onclick="pick('f-apoyo','Uniforme',this)">Uniforme</button>
+      <button class="sb-btn" onclick="pick('f-apoyo','Asimétrico',this)">Asimétrico</button>
+      <button class="sb-btn" onclick="pick('f-apoyo','Zona de presión',this)">Presión</button>
+    </div><input type="hidden" id="f-apoyo"></div>
+    <div class="field"><label>Solución de relleno</label><div class="score-row">
+      <button class="sb-btn" onclick="pick('f-sol','BSS estéril',this)">BSS</button>
+      <button class="sb-btn" onclick="pick('f-sol','Suero autólogo',this)">Suero</button>
+      <button class="sb-btn" onclick="pick('f-sol','Preservativo-free',this)">PF</button>
+    </div><input type="hidden" id="f-sol"></div>
+    <div class="field"><label>Notas de fitting</label><textarea id="f-notas" placeholder="Zonas problemáticas, ajustes realizados…"></textarea></div>
+  </div>`,
+  getData:()=>({
+    nombre:v('f-nombre')||'Paciente', edad:v('f-edad')||'N/D', sexo:v('f-sexo')||'N/D', fecha:v('f-fecha')||today(),
+    indicacion:v('f-indicacion')||'N/D',
+    hvidOD:v('f-hvidOD')||'N/D', hvidOI:v('f-hvidOI')||'N/D',
+    sagCornOD:v('f-sagCornOD')||'N/D', sagCornOI:v('f-sagCornOI')||'N/D',
+    kmaxOD:v('f-kmaxOD')||'N/D', kmaxOI:v('f-kmaxOI')||'N/D', sup:v('f-sup')||'N/D',
+    tipolc:v('f-tipolc')||'N/D', diam:v('f-diam')||'N/D', sag:v('f-sag')||'N/D',
+    power:v('f-power')||'N/D', cil:v('f-cil')||'N/D', clear:v('f-clear')||'N/D',
+    avlcOD:v('f-avlcOD')||'N/D', avlcOI:v('f-avlcOI')||'N/D',
+    apoyo:v('f-apoyo')||'N/D', sol:v('f-sol')||'N/D', notas:v('f-notas')||''
+  }),
+  dataStr:d=>`Paciente: ${d.nombre}, ${d.edad}a, ${d.sexo} | Fecha: ${d.fecha}
+Indicación: ${d.indicacion} | Superficie ocular: ${d.sup}
+HVID OD: ${d.hvidOD}mm / OI: ${d.hvidOI}mm | Sagita corneal OD: ${d.sagCornOD}µm / OI: ${d.sagCornOI}µm
+Kmax OD: ${d.kmaxOD}D / OI: ${d.kmaxOI}D
+Lente: ${d.tipolc} Ø${d.diam}mm | Sagita: ${d.sag}µm | Power: ${d.power}D | Cil: ${d.cil}D
+Clearance: ${d.clear} | Apoyo escleral: ${d.apoyo} | Solución: ${d.sol}
+AV con LC OD: ${d.avlcOD} / OI: ${d.avlcOI} | Notas: ${d.notas}`,
+  clsLevel:d=>{
+    const i=d.indicacion||'';
+    if(i.includes('seco'))return 1;
+    if(i.includes('KC')||i.includes('Post-L'))return 2;
+    if(i.includes('trasplante')||i.includes('distrofia'))return 3;
+    return 2;
+  },
+  prompts:(ds,d)=>({
+    informe:`INFORME CLÍNICO ESTRUCTURADO de adaptación de lente escleral para Lentesespecializados.
+Secciones: INDICACIÓN CLÍNICA | MEDIDAS CORNEALES Y ESCLERALES | PROCESO DE FITTING | ANÁLISIS MULTIAGENTE (Hypothesis/Stewardship/Checklist) | RESULTADO DEL FITTING | PARÁMETROS FINALES | FIRMA
+Datos: ${ds}
+Firma: Dr. Leonardo Orjuela — Optómetra Especialista en Contactología | Lentesespecializados | Medellín`,
+    fitting:`PROTOCOLO DE FITTING DE LENTE ESCLERAL para este paciente.
+Incluye: selección de diámetro y tipo, cálculo de sagita inicial (fórmula sagita corneal + clearance deseado), ajustes de bowl, zonas de transición y apoyo escleral, manejo de burbujas, instrucciones de inserción/remoción, tiempo de adaptación.
+Datos: ${ds}`,
+    prescripcion:`PRESCRIPCIÓN FORMAL DE LENTE ESCLERAL.
+Incluye: parámetros finales completos (tipo, diámetro, sagita, power, cilindro, eje, material, Dk/t, tinte de manipulación), solución de relleno indicada, frecuencia de cambio, instrucciones de mantenimiento, estuche recomendado.
+Datos: ${ds}
+Prescribe: Dr. Leonardo Orjuela | Lentesespecializados`,
+    seguimiento:`PLAN DE SEGUIMIENTO post-fitting de lente escleral desde ${new Date().toLocaleDateString('es-CO',{day:'numeric',month:'long',year:'numeric'})}.
+Controles a 1sem/1m/3m/6m/1a. Qué evaluar en cada control. Criterios para modificar parámetros. Señales de alarma (hipoxia, infiltrados, edema). Instrucciones al paciente.
+Datos: ${ds}`
+  })
+}
+
+}; // end MODULES
+
+// ══════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════
+let curMod = null;
+
+// ══════════════════════════════════════════════
+// UTILS
+// ══════════════════════════════════════════════
+const v = id => { const e=document.getElementById(id); return e?e.value.trim():''; };
+const today = () => new Date().toISOString().split('T')[0];
+function getCI(){
+  return [...document.querySelectorAll('.ci.on')].map(e=>e.textContent.trim()).join(', ');
+}
+function pick(id,val,btn){
+  document.getElementById(id).value=val;
+  btn.closest('.field').querySelectorAll('.sb-btn').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+}
+function tog(el){ el.classList.toggle('on'); }
+const sleep = ms => new Promise(r=>setTimeout(r,ms));
+
+// ══════════════════════════════════════════════
+// NAVIGATION
+// ══════════════════════════════════════════════
+function goHome(navEl){
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  if(navEl) navEl.classList.add('active');
+  document.getElementById('home').classList.add('active');
+  document.getElementById('module-container').style.display='none';
+  curMod=null;
+}
+
+function goModule(modId, navEl){
+  curMod=modId;
+  const m=MODULES[modId];
+  document.getElementById('home').classList.remove('active');
+  document.getElementById('module-container').style.display='grid';
+
+  // Nav highlight
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  if(navEl) navEl.classList.add('active');
+  else {
+    const items=[...document.querySelectorAll('.nav-item')];
+    const idx={os:2,gl:3,kc:4,ls:5}[modId];
+    if(items[idx]) items[idx].classList.add('active');
+  }
+
+  // Sidebar
+  const sb=document.getElementById('sidebar-content');
+  sb.innerHTML=`
+    <div class="sb-head">
+      <div class="sb-tag ${m.tagCls}">${m.tag}</div>
+      <h2>${m.title}</h2>
+      <p>${m.subtitle}</p>
+    </div>
+    ${m.sidebar}
+    <div class="gen-area">
+      <button class="btn-gen" id="btn-gen" onclick="runGenerate()">🤖 Generar documentos con IA</button>
+      <div class="ag-status" id="ag-status" style="display:none">
+        ${m.agents.map((_,i)=>`<div class="ag-line" id="ag${i}"><div class="ag-dot"></div>${m.agents[i]}</div>`).join('')}
+      </div>
+    </div>`;
+
+  // Set today
+  const fd=document.getElementById('f-fecha');
+  if(fd) fd.value=today();
+
+  // Main
+  document.getElementById('main-title').textContent=m.title;
+
+  // Tabs
+  const tr=document.getElementById('tabs-row');
+  tr.innerHTML=m.tabs.map((t,i)=>
+    `<div class="tab${i===0?' on':''}" onclick="switchTab(${i},this)">${t}</div>`
+  ).join('');
+
+  // Out area reset
+  document.getElementById('empty-state').style.display='flex';
+  document.getElementById('empty-ico').textContent=m.emptyIco;
+  document.getElementById('cls-bar-container').innerHTML='';
+  document.getElementById('docs-container').innerHTML='';
+
+  // Doc panels
+  const dc=document.getElementById('docs-container');
+  m.docs.forEach((id,i)=>{
+    dc.innerHTML+=`<div class="dp${i===0?' show':''}" id="dp-${id}">
+      <div class="dc" id="dc-${id}" style="display:none">
+        <div class="dch" onclick="toggleBody('db-${id}')">
+          <div class="dct"><span>${m.docLabels[i]}</span></div>
+          <span class="dbadge b-ok" id="badge-${id}">Listo</span>
+        </div>
+        <div class="dcb open" id="db-${id}">
+          <div class="doc-txt" id="dt-${id}"></div>
+          <div class="doc-acts">
+            <button class="btn-act" onclick="copyDoc('dt-${id}')">📋 Copiar</button>
+            <button class="btn-act btn-pdf" onclick="exportPDF('dt-${id}','${m.docLabels[i]}')">🖨️ Exportar PDF</button>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  });
+}
+
+function switchTab(idx, el){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
+  el.classList.add('on');
+  const m=MODULES[curMod];
+  document.querySelectorAll('.dp').forEach(p=>p.classList.remove('show'));
+  document.getElementById('dp-'+m.docs[idx]).classList.add('show');
+}
+
+function toggleBody(id){
+  document.getElementById(id).classList.toggle('open');
+}
+
+// ══════════════════════════════════════════════
+// GENERATE
+// ══════════════════════════════════════════════
+async function runGenerate(){
+  const m=MODULES[curMod];
+  const btn=document.getElementById('btn-gen');
+  btn.disabled=true;
+  document.getElementById('empty-state').style.display='none';
+  document.getElementById('ag-status').style.display='flex';
+
+  const d=m.getData();
+  const ds=m.dataStr(d);
+
+  // Agent simulation
+  for(let i=0;i<4;i++){
+    setAg(i,'run'); await sleep(500+i*100); setAg(i,'ok');
+  }
+
+  // Classifier
+  const clsLvl=m.clsLevel(d);
+  const cb=document.getElementById('cls-bar-container');
+  if(m.classifier){
+    cb.innerHTML=`<div class="cls-bar show">
+      <div class="cls-title">// ${m.classifier.title}</div>
+      <div class="cls-steps">${m.classifier.steps.map((s,i)=>{
+        const parts=s.split('\n');
+        return `<div class="cs${i+1===clsLvl?' on':''}" style="${i+1===clsLvl?`color:var(--${['rose','sky','amber','violet'][clsLvl-1]||'accent'})`:''}"">
+          <span class="csn">${i+1}</span>${parts.slice(1).join('<br>')}
+        </div>`;
+      }).join('')}</div>
+    </div>`;
+  }
+
+  const prompts=m.prompts(ds,d);
+  const docKeys=m.docs;
+
+  for(let i=0;i<docKeys.length;i++){
+    const key=docKeys[i];
+    setAg(4+i,'run');
+    document.getElementById('dc-'+key).style.display='block';
+    // Show in its tab
+    document.querySelectorAll('.tab')[i].click();
+    document.getElementById('dt-'+key).innerHTML=`<div class="sk w8"></div><div class="sk w6"></div><div class="sk w8"></div><div class="sk w4"></div>`;
+    try{
+      const txt=await callClaude(prompts[key]||'');
+      document.getElementById('dt-'+key).innerText=txt;
+    }catch(e){
+      document.getElementById('dt-'+key).innerText='Error al generar. Verifique conexión.';
+    }
+    setAg(4+i,'ok');
+  }
+
+  // Back to tab 0
+  document.querySelectorAll('.tab')[0].click();
+  btn.disabled=false;
+  btn.innerHTML='✅ Regenerar documentos';
+}
+
+function setAg(i,state){
+  const el=document.getElementById('ag'+i);
+  if(!el)return;
+  el.classList.remove('run','ok');
+  if(state)el.classList.add(state);
+}
+
+async function callClaude(prompt){
+  const key = window._apiKey;
+  if(!key){ throw new Error('API key no configurada'); }
+  const r=await fetch("https://api.anthropic.com/v1/messages",{
+    method:"POST",
+    headers:{
+      "Content-Type":"application/json",
+      "x-api-key": key,
+      "anthropic-version":"2023-06-01",
+      "anthropic-dangerous-direct-browser-access":"true"
+    },
+    body:JSON.stringify({
+      model:"claude-sonnet-4-20250514",
+      max_tokens:1000,
+      system:`Eres asistente clínico especializado en optometría y oftalmología para la práctica Lentesespecializados del Dr. Leonardo Orjuela, Medellín, Colombia.
+Generas documentos clínicos profesionales en español colombiano con terminología precisa.
+El clínico es el responsable legal de toda decisión. Responde ÚNICAMENTE con el documento solicitado, sin introducción ni comentarios adicionales.`,
+      messages:[{role:"user",content:prompt}]
+    })
+  });
+  const data=await r.json();
+  if(data.error) throw new Error(data.error.message||'Error API');
+  return data.content?.[0]?.text||'Error generando documento.';
+}
+
+// ══════════════════════════════════════════════
+// EXPORT
+// ══════════════════════════════════════════════
+function copyDoc(id){
+  navigator.clipboard.writeText(document.getElementById(id).innerText)
+    .then(()=>{ const btn=event.target; btn.textContent='✅ Copiado'; setTimeout(()=>btn.textContent='📋 Copiar',2000); });
+}
+
+function exportPDF(contentId, title){
+  const content = document.getElementById(contentId).innerText;
+  const m = MODULES[curMod];
+  const d = m.getData();
+  const fecha = new Date().toLocaleDateString('es-CO',{day:'numeric',month:'long',year:'numeric'});
+
+  const printWin = window.open('','_blank','width=800,height=900');
+  printWin.document.write(`<!DOCTYPE html><html><head>
+<meta charset="UTF-8">
+<title>${title} — ${d.nombre}</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;600&display=swap');
+  @page { margin: 20mm 18mm; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family: 'Instrument Sans', Georgia, serif; font-size: 10.5pt; color: #111; line-height: 1.75; }
+  .header { display:flex; justify-content:space-between; align-items:flex-start; padding-bottom:12px; border-bottom:2px solid #1a8050; margin-bottom:18px; }
+  .hdr-left h1 { font-size:14pt; color:#1a8050; font-weight:600; margin-bottom:2px; }
+  .hdr-left p { font-size:8.5pt; color:#666; }
+  .hdr-right { text-align:right; }
+  .hdr-right .practice { font-size:9.5pt; font-weight:600; color:#1a8050; }
+  .hdr-right .addr { font-size:8pt; color:#888; margin-top:2px; }
+  .doc-title { font-size:13pt; font-weight:600; color:#0a2f1e; margin-bottom:4px; }
+  .doc-meta { font-size:8.5pt; color:#666; margin-bottom:18px; padding-bottom:10px; border-bottom:1px solid #e0e0e0; }
+  .content { white-space:pre-wrap; font-size:10pt; line-height:1.85; color:#1a1a1a; }
+  .footer { margin-top:32px; padding-top:12px; border-top:1px solid #ccc; display:flex; justify-content:space-between; font-size:8pt; color:#888; }
+  .watermark { position:fixed; bottom:40px; right:30px; font-size:8pt; color:#ccc; transform:rotate(-30deg); pointer-events:none; }
+  @media print { body { -webkit-print-color-adjust:exact; } }
+</style>
+</head><body>
+<div class="header">
+  <div class="hdr-left">
+    <h1>Virtual Eye Panel</h1>
+    <p>Sistema Diagnóstico Multiagente · IA Generativa</p>
+  </div>
+  <div class="hdr-right">
+    <div class="practice">Lentesespecializados</div>
+    <div class="addr">Dr. Leonardo Orjuela — Optómetra Especialista<br>Medellín, Colombia</div>
+  </div>
+</div>
+<div class="doc-title">${title}</div>
+<div class="doc-meta">Paciente: <strong>${d.nombre}</strong> &nbsp;|&nbsp; Fecha: ${fecha} &nbsp;|&nbsp; Módulo: ${m.title}</div>
+<div class="content">${content.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
+<div class="footer">
+  <span>Lentesespecializados · Dr. Leonardo Orjuela · Medellín, Colombia</span>
+  <span>Documento generado con apoyo de IA · Validado por el clínico · ${fecha}</span>
+</div>
+<div class="watermark">Lentesespecializados</div>
+
+<!-- API Key Modal -->
+<div class="apikey-modal" id="apikey-modal">
+  <div class="apikey-box">
+    <h2>🔑 Configurar API Key</h2>
+    <p>Ingresa tu API key de Anthropic para activar la generación de documentos clínicos con IA. Se guarda solo en este navegador.</p>
+    <input type="password" id="apikey-input" placeholder="sk-ant-api03-..." autocomplete="off">
+    <button class="btn-ok" onclick="saveApiKey()">Activar Virtual Eye Panel</button>
+    <div class="note">Tu clave se guarda localmente en este dispositivo.<br>Nunca se envía a ningún servidor externo excepto Anthropic.</div>
+  </div>
+</div>
+</body></html>`);
+  printWin.document.close();
+  setTimeout(()=>{ printWin.focus(); printWin.print(); },600);
+}
+
+// ── API KEY MANAGEMENT ──
+function initApiKey(){
+  const saved = sessionStorage.getItem('vep_key');
+  if(saved){ window._apiKey = saved; document.getElementById('apikey-modal').style.display='none'; }
+  else { document.getElementById('apikey-modal').style.display='flex'; }
+}
+
+function saveApiKey(){
+  const val = document.getElementById('apikey-input').value.trim();
+  if(!val.startsWith('sk-ant-')){ alert('Clave inválida. Debe empezar con sk-ant-'); return; }
+  window._apiKey = val;
+  sessionStorage.setItem('vep_key', val);
+  document.getElementById('apikey-modal').style.display='none';
+  showToast('✅ API Key activada');
+}
+
+function showToast(msg){
+  const t=document.createElement('div');
+  t.className='apikey-saved'; t.textContent=msg;
+  document.body.appendChild(t);
+  setTimeout(()=>t.remove(),3000);
+}
+
+// Allow Enter key
+document.addEventListener('DOMContentLoaded',()=>{
+  initApiKey();
+  const inp=document.getElementById('apikey-input');
+  if(inp) inp.addEventListener('keydown',e=>{ if(e.key==='Enter') saveApiKey(); });
+});
+
+</script>
+</body>
+</html>
