@@ -850,6 +850,16 @@ function toggleBody(id){
 // GENERATE
 // ══════════════════════════════════════════════
 async function runGenerate(){
+  // Ask for API key if not set
+  if(!window._apiKey){
+    const key = prompt('🔑 Ingresa tu API Key de Anthropic:\n(empieza con sk-ant-api03-)');
+    if(!key || !key.startsWith('sk-ant-')){ 
+      alert('Clave inválida. Debe empezar con sk-ant-'); 
+      return; 
+    }
+    window._apiKey = key;
+    sessionStorage.setItem('vep_key', key);
+  }
   const m=MODULES[curMod];
   const btn=document.getElementById('btn-gen');
   btn.disabled=true;
@@ -1010,17 +1020,7 @@ function exportPDF(contentId, title){
 // ── API KEY MANAGEMENT ──
 function initApiKey(){
   const saved = sessionStorage.getItem('vep_key');
-  if(saved){ window._apiKey = saved; document.getElementById('apikey-modal').style.display='none'; }
-  else { document.getElementById('apikey-modal').style.display='flex'; }
-}
-
-function saveApiKey(){
-  const val = document.getElementById('apikey-input').value.trim();
-  if(!val.startsWith('sk-ant-')){ alert('Clave inválida. Debe empezar con sk-ant-'); return; }
-  window._apiKey = val;
-  sessionStorage.setItem('vep_key', val);
-  document.getElementById('apikey-modal').style.display='none';
-  showToast('✅ API Key activada');
+  if(saved){ window._apiKey = saved; }
 }
 
 function showToast(msg){
@@ -1030,12 +1030,7 @@ function showToast(msg){
   setTimeout(()=>t.remove(),3000);
 }
 
-// Allow Enter key
-document.addEventListener('DOMContentLoaded',()=>{
-  initApiKey();
-  const inp=document.getElementById('apikey-input');
-  if(inp) inp.addEventListener('keydown',e=>{ if(e.key==='Enter') saveApiKey(); });
-});
+document.addEventListener('DOMContentLoaded',()=>{ initApiKey(); });
 
 </script>
 </body>
