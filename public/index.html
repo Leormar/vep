@@ -923,7 +923,13 @@ async function callClaude(prompt){
       prompt,
       system:`Eres asistente clínico especializado en optometría y oftalmología para la práctica Lentesespecializados del Dr. Leonardo Orjuela, Medellín, Colombia.
 Generas documentos clínicos profesionales en español colombiano con terminología precisa.
-El clínico es el responsable legal de toda decisión. Responde ÚNICAMENTE con el documento solicitado, sin introducción ni comentarios adicionales.`
+REGLAS ESTRICTAS DE FORMATO:
+- NO incluyas encabezados con el nombre del médico, clínica o ciudad — eso ya está en el membrete
+- NO uses markdown: sin #, ##, **, *, ni ---
+- NO uses listas con * — usa guión - o texto plano
+- Usa texto plano bien estructurado con secciones en MAYÚSCULAS como título
+- El clínico es el responsable legal de toda decisión
+- Responde ÚNICAMENTE con el contenido del documento, sin introducción ni comentarios`
     })
   });
   const data=await r.json();
@@ -948,8 +954,12 @@ function exportPDF(contentId, title){
 
   // Clean up the text: remove --- dividers and collapse blank lines
   const cleanText = rawText
+    .replace(/^#{1,6}\s*/gm, '')
     .replace(/^---+$/gm, '')
     .replace(/\*\*/g, '')
+    .replace(/^\*\s/gm, '- ')
+    .replace(/\[\s?\]/g, '☐')
+    .replace(/\[x\]/gi, '☑')
     .replace(/[\r\n]{3,}/g, '\n\n')
     .trim();
 
