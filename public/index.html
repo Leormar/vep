@@ -720,6 +720,58 @@ ls: {
       <button class="sb-btn" onclick="pick('f-sol','Preservativo-free',this)">PF</button>
     </div><input type="hidden" id="f-sol"></div>
     <div class="field"><label>Notas de fitting</label><textarea id="f-notas" placeholder="Zonas problemáticas, ajustes realizados…"></textarea></div>
+  </div>
+  <div class="fs"><div class="fl">Alteraciones superficie ocular (Barnett & Johns)</div>
+    <div class="field"><label>Pterigión / Pinguécula</label><div class="score-row">
+      <button class="sb-btn" onclick="pick('f-pterigio','No aplica',this)">No aplica</button>
+      <button class="sb-btn" onclick="pick('f-pterigio','Pinguécula',this)">Pinguécula</button>
+      <button class="sb-btn" onclick="pick('f-pterigio','Pterigión G1',this)">Pter G1</button>
+      <button class="sb-btn" onclick="pick('f-pterigio','Pterigión G2-3',this)">Pter G2-3</button>
+      <button class="sb-btn" onclick="pick('f-pterigio','Post-cirugía',this)">Post-Qx</button>
+    </div><input type="hidden" id="f-pterigio"></div>
+    <div class="field"><label>Alteraciones conjuntivales</label><div class="cg">
+      <label class="ci" onclick="tog(this)"><div class="cb">✓</div>Hipertrofia conjuntival</label>
+      <label class="ci" onclick="tog(this)"><div class="cb">✓</div>Prolapso conjuntival</label>
+      <label class="ci" onclick="tog(this)"><div class="cb">✓</div>Queratinización conjuntival</label>
+      <label class="ci" onclick="tog(this)"><div class="cb">✓</div>Nódulos conjuntivales</label>
+      <label class="ci" onclick="tog(this)"><div class="cb">✓</div>Bleb filtrante glaucoma</label>
+      <label class="ci" onclick="tog(this)"><div class="cb">✓</div>Simblefaron</label>
+    </div></div>
+    <div class="field"><label>Cicatrización / Trauma corneal</label><div class="score-row">
+      <button class="sb-btn" onclick="pick('f-cicatriz','No',this)">No</button>
+      <button class="sb-btn" onclick="pick('f-cicatriz','Periférica',this)">Periférica</button>
+      <button class="sb-btn" onclick="pick('f-cicatriz','Paracentral',this)">Paracentral</button>
+      <button class="sb-btn" onclick="pick('f-cicatriz','Central',this)">Central</button>
+      <button class="sb-btn" onclick="pick('f-cicatriz','Difusa',this)">Difusa</button>
+    </div><input type="hidden" id="f-cicatriz"></div>
+    <div class="field"><label>Enfermedad ocular superficie inflamatoria</label><div class="cg">
+      <label class="ci" onclick="tog(this)"><div class="cb">✓</div>SJS / NET</label>
+      <label class="ci" onclick="tog(this)"><div class="cb">✓</div>GvHD (Enf. injerto vs huésped)</label>
+      <label class="ci" onclick="tog(this)"><div class="cb">✓</div>Pemfigoide ocular cicatricial</label>
+      <label class="ci" onclick="tog(this)"><div class="cb">✓</div>Rosácea ocular</label>
+      <label class="ci" onclick="tog(this)"><div class="cb">✓</div>AR / Lupus / Sjögren</label>
+      <label class="ci" onclick="tog(this)"><div class="cb">✓</div>Ojo seco neurotrófico</label>
+    </div></div>
+    <div class="field"><label>Deficiencia células madre limbales (LSCD)</label><div class="score-row">
+      <button class="sb-btn" onclick="pick('f-lscd','No',this)">No</button>
+      <button class="sb-btn" onclick="pick('f-lscd','Parcial unilateral',this)">Parcial Uni</button>
+      <button class="sb-btn" onclick="pick('f-lscd','Parcial bilateral',this)">Parcial Bi</button>
+      <button class="sb-btn" onclick="pick('f-lscd','Total',this)">Total</button>
+    </div><input type="hidden" id="f-lscd"></div>
+    <div class="field"><label>Queratopatía / Exposición</label><div class="cg">
+      <label class="ci" onclick="tog(this)"><div class="cb">✓</div>Queratopatía neurotrófica</label>
+      <label class="ci" onclick="tog(this)"><div class="cb">✓</div>Queratopatía por exposición</label>
+      <label class="ci" onclick="tog(this)"><div class="cb">✓</div>Defecto epitelial persistente</label>
+      <label class="ci" onclick="tog(this)"><div class="cb">✓</div>Distrofia corneal</label>
+      <label class="ci" onclick="tog(this)"><div class="cb">✓</div>Post-trasplante (PK/DALK)</label>
+      <label class="ci" onclick="tog(this)"><div class="cb">✓</div>Post-radioterapia</label>
+    </div></div>
+    <div class="field"><label>Fogging (Midday Fogging)</label><div class="score-row">
+      <button class="sb-btn" onclick="pick('f-fogging','No',this)">No</button>
+      <button class="sb-btn" onclick="pick('f-fogging','Leve',this)">Leve</button>
+      <button class="sb-btn" onclick="pick('f-fogging','Moderado',this)">Moderado</button>
+      <button class="sb-btn" onclick="pick('f-fogging','Severo',this)">Severo</button>
+    </div><input type="hidden" id="f-fogging"></div>
   </div>`,
   getData:()=>({
     nombre:v('f-nombre')||'Paciente', edad:v('f-edad')||'N/D', sexo:v('f-sexo')||'N/D', fecha:v('f-fecha')||today(),
@@ -730,7 +782,11 @@ ls: {
     tipolc:v('f-tipolc')||'N/D', diam:v('f-diam')||'N/D', sag:v('f-sag')||'N/D',
     power:v('f-power')||'N/D', cil:v('f-cil')||'N/D', clear:v('f-clear')||'N/D',
     avlcOD:v('f-avlcOD')||'N/D', avlcOI:v('f-avlcOI')||'N/D',
-    apoyo:v('f-apoyo')||'N/D', sol:v('f-sol')||'N/D', notas:v('f-notas')||''
+    apoyo:v('f-apoyo')||'N/D', sol:v('f-sol')||'N/D', notas:v('f-notas')||'',
+    pterigio:v('f-pterigio')||'N/D', conjAlt:getCI(),
+    cicatriz:v('f-cicatriz')||'N/D', enf_sup:getCI(),
+    lscd:v('f-lscd')||'N/D', queratAlt:getCI(),
+    fogging:v('f-fogging')||'N/D'
   }),
   dataStr:d=>`Paciente: ${d.nombre}, ${d.edad}a, ${d.sexo} | Fecha: ${d.fecha}
 Indicación: ${d.indicacion} | Superficie ocular: ${d.sup}
@@ -738,7 +794,9 @@ HVID OD: ${d.hvidOD}mm / OI: ${d.hvidOI}mm | Sagita corneal OD: ${d.sagCornOD}µ
 Kmax OD: ${d.kmaxOD}D / OI: ${d.kmaxOI}D
 Lente: ${d.tipolc} Ø${d.diam}mm | Sagita: ${d.sag}µm | Power: ${d.power}D | Cil: ${d.cil}D
 Clearance: ${d.clear} | Apoyo escleral: ${d.apoyo} | Solución: ${d.sol}
-AV con LC OD: ${d.avlcOD} / OI: ${d.avlcOI} | Notas: ${d.notas}`,
+AV con LC OD: ${d.avlcOD} / OI: ${d.avlcOI} | Notas: ${d.notas}
+SUPERFICIE OCULAR (Barnett & Johns): Pterigión/Pinguécula: ${d.pterigio} | Cicatriz corneal: ${d.cicatriz} | LSCD: ${d.lscd} | Fogging: ${d.fogging}
+Alteraciones conjuntivales: ${d.conjAlt} | Enf. inflamatoria: ${d.enf_sup} | Queratopatía: ${d.queratAlt}`,
   clsLevel:d=>{
     const i=d.indicacion||'';
     if(i.includes('seco'))return 1;
