@@ -997,19 +997,12 @@ function exportPDF(contentId, title){
 </div>
 </body></html>`;
 
-  // TRUE DOWNLOAD — no print dialog
-  const blob = new Blob([htmlContent], {type:'text/html;charset=utf-8'});
-  const link = document.createElement('a');
-  link.href = URL.createObjectURL(blob);
-  link.download = title.replace(/[^a-zA-Z0-9]/g,'_') + '_' + (d.nombre||'paciente').replace(/\s+/g,'_') + '.html';
-  link.click();
-  setTimeout(()=>URL.revokeObjectURL(link.href), 3000);
-
-  // Also open print view for PDF
-  const pw = window.open('','_blank','width=820,height:950');
+  // Abrir ventana de impresión → Guardar como PDF
+  const pw = window.open('','_blank','width=860,height=980');
   pw.document.write(htmlContent);
   pw.document.close();
-  setTimeout(()=>{ pw.focus(); pw.print(); }, 600);
+  pw.onload = () => { pw.focus(); pw.print(); };
+  setTimeout(()=>{ pw.focus(); pw.print(); }, 700);
 }
 
 
