@@ -359,6 +359,8 @@ os: {
     <label class="ci" onclick="tog(this)"><div class="cb">✓</div>Pantalla >6h</label>
     <label class="ci" onclick="tog(this)"><div class="cb">✓</div>Post-LASIK</label>
     <label class="ci" onclick="tog(this)"><div class="cb">✓</div>Sjögren</label>
+    <label class="ci" onclick="tog(this)"><div class="cb">✓</div>Demodex/Blefaritis</label>
+    <label class="ci" onclick="tog(this)"><div class="cb">✓</div>Rosácea ocular</label>
   </div></div>
   <div class="fs"><div class="fl">Clasificación &amp; Lente</div>
     <div class="field"><label>DEWS II subtipo</label><select id="f-subtipo">
@@ -373,6 +375,34 @@ os: {
     </select></div>
     <div class="fr"><div class="field"><label>Diámetro (mm)</label><input id="f-diam" placeholder="16.5"></div>
     <div class="field"><label>Sagita (µm)</label><input id="f-sag" placeholder="4200"></div></div>
+    <div class="fs"><div class="fl">Demodex / Blefaritis</div>
+    <div class="field"><label>Sospecha Demodex</label><div class="score-row">
+      <button class="sb-btn" onclick="pick('f-demodex','No sospecha',this)">No</button>
+      <button class="sb-btn" onclick="pick('f-demodex','Sospecha leve',this)">Leve</button>
+      <button class="sb-btn" onclick="pick('f-demodex','Sospecha moderada',this)">Moderada</button>
+      <button class="sb-btn" onclick="pick('f-demodex','Confirmado',this)">Confirmado</button>
+    </div><input type="hidden" id="f-demodex"></div>
+    <div class="field"><label>Tipo blefaritis asociada</label><div class="score-row">
+      <button class="sb-btn" onclick="pick('f-blefaritis','Anterior',this)">Anterior</button>
+      <button class="sb-btn" onclick="pick('f-blefaritis','Posterior (MGD)',this)">Posterior</button>
+      <button class="sb-btn" onclick="pick('f-blefaritis','Mixta',this)">Mixta</button>
+      <button class="sb-btn" onclick="pick('f-blefaritis','No aplica',this)">No aplica</button>
+    </div><input type="hidden" id="f-blefaritis"></div>
+    <div class="field"><label>Hallazgos blefaritis</label><div class="cg">
+      <label class="ci" onclick="tog(this)"><div class="cb">✓</div>Cilindros en pestaña</label>
+      <label class="ci" onclick="tog(this)"><div class="cb">✓</div>Collaretes</label>
+      <label class="ci" onclick="tog(this)"><div class="cb">✓</div>Teleangectasias</label>
+      <label class="ci" onclick="tog(this)"><div class="cb">✓</div>Escamas seborreicas</label>
+      <label class="ci" onclick="tog(this)"><div class="cb">✓</div>Eritema palpebral</label>
+      <label class="ci" onclick="tog(this)"><div class="cb">✓</div>Madarosis</label>
+    </div></div>
+    <div class="field"><label>Tratamiento Demodex previo</label><div class="score-row">
+      <button class="sb-btn" onclick="pick('f-tto-demodex','Ninguno',this)">Ninguno</button>
+      <button class="sb-btn" onclick="pick('f-tto-demodex','Tea Tree Oil',this)">TTO</button>
+      <button class="sb-btn" onclick="pick('f-tto-demodex','Ivermectina tópica',this)">Ivermectina</button>
+      <button class="sb-btn" onclick="pick('f-tto-demodex','Cliradex',this)">Cliradex</button>
+    </div><input type="hidden" id="f-tto-demodex"></div>
+  </div>
     <div class="field"><label>Notas clínicas</label><textarea id="f-notas" placeholder="Hallazgos, tratamientos previos…"></textarea></div>
   </div>`,
   getData: () => ({
@@ -382,6 +412,8 @@ os: {
     meibo: v('f-meibo')||'N/D', tinc: v('f-tinc')||'N/D',
     schOD: v('f-schOD')||'N/D', schOI: v('f-schOI')||'N/D',
     meibum: v('f-meibum')||'N/D', subtipo: v('f-subtipo')||'N/D',
+    demodex: v('f-demodex')||'N/D', blefaritis: v('f-blefaritis')||'N/D',
+    hallBlefaritis: getCI(), ttoDemodex: v('f-tto-demodex')||'N/D',
     lente: v('f-lente')||'', diam: v('f-diam')||'', sag: v('f-sag')||'',
     notas: v('f-notas')||''
   }),
@@ -390,6 +422,7 @@ OSDI: ${d.osdi}/100 (${d.sev}) | Síntomas: ${d.sintomas}
 BUT OD: ${d.butOD}s / OI: ${d.butOI}s | Meibografía: ${d.meibo} | Tinción Oxford: ${d.tinc}
 Schirmer OD: ${d.schOD}mm / OI: ${d.schOI}mm | Meibum: ${d.meibum}
 DEWS II: ${d.subtipo} | Lente: ${d.lente} ${d.diam}mm ${d.sag}µm
+Demodex: ${d.demodex} | Blefaritis: ${d.blefaritis} | Hallazgos: ${d.hallBlefaritis} | Tto previo: ${d.ttoDemodex}
 Notas: ${d.notas}`,
   clsLevel: d => {
     let l=1; const o=parseInt(d.osdi)||0, b=parseFloat(d.butOD)||10;
