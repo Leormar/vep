@@ -2,8 +2,26 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+
+  <!-- PWA -->
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#1a3a5c">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="VEP Pro">
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192x192.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="/icons/icon-512x512.png">
 <title>Virtual Eye Panel — Lentesespecializados</title>
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#1a3a5c">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="VEP Pro">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400;500&family=Instrument+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -157,6 +175,25 @@ body::before{content:'';position:fixed;inset:0;
 .pn-div{width:1px;height:36px;background:var(--border);}
 .pn-txt{font-size:.78rem;color:var(--text2);line-height:1.6;}
 
+
+/* ── PHOTOS ── */
+.photo-section{padding:14px 18px;border-bottom:1px solid var(--border);}
+.photo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px;}
+.photo-slot{position:relative;aspect-ratio:1;border-radius:8px;border:2px dashed var(--border2);
+  background:var(--surface);display:flex;flex-direction:column;align-items:center;
+  justify-content:center;cursor:pointer;overflow:hidden;transition:all .2s;}
+.photo-slot:hover{border-color:var(--accent3);background:var(--surface2);}
+.photo-slot img{width:100%;height:100%;object-fit:cover;border-radius:6px;}
+.photo-slot .ps-ico{font-size:1.4rem;margin-bottom:4px;}
+.photo-slot .ps-lbl{font-family:'DM Mono',monospace;font-size:.52rem;text-transform:uppercase;
+  letter-spacing:.08em;color:var(--text3);text-align:center;padding:0 4px;}
+.photo-slot .ps-del{position:absolute;top:4px;right:4px;background:rgba(185,28,28,.85);
+  color:#fff;border:none;border-radius:50%;width:20px;height:20px;font-size:.65rem;
+  cursor:pointer;display:none;align-items:center;justify-content:center;}
+.photo-slot:has(img) .ps-del{display:flex;}
+.photo-slot:has(img) .ps-ico,.photo-slot:has(img) .ps-lbl{display:none;}
+.photo-count{font-family:'DM Mono',monospace;font-size:.58rem;color:var(--text3);margin-top:6px;}
+
 /* ── PRINT ── */
 @media print {
   body{background:#fff !important;color:#000 !important;}
@@ -284,6 +321,114 @@ body::before{content:'';position:fixed;inset:0;
 <div class="print-area" id="print-area"></div>
 
 <script>
+
+// ── PHOTO SYSTEM ──
+const PHOTO_SLOTS = {
+  os: [
+    {id:'os_lamp',    ico:'🔬', lbl:'Lámpara hendidura'},
+    {id:'os_meibo',   ico:'👁️', lbl:'Meibografía'},
+    {id:'os_tincion', ico:'💚', lbl:'Tinción corneal'},
+    {id:'os_schirmer',ico:'📏', lbl:'Schirmer'},
+    {id:'os_but',     ico:'⏱️', lbl:'BUT / Tearscope'},
+    {id:'os_extra',   ico:'📷', lbl:'Foto adicional'},
+  ],
+  gl: [
+    {id:'gl_disco',   ico:'🔵', lbl:'Disco óptico'},
+    {id:'gl_oct',     ico:'📊', lbl:'OCT RNFL'},
+    {id:'gl_campo',   ico:'🗺️', lbl:'Campo visual'},
+    {id:'gl_gcl',     ico:'🧠', lbl:'GCL+'},
+    {id:'gl_foto',    ico:'📷', lbl:'Foto fondo'},
+    {id:'gl_extra',   ico:'📸', lbl:'Foto adicional'},
+  ],
+  kc: [
+    {id:'kc_penta',   ico:'🌀', lbl:'Pentacam'},
+    {id:'kc_topo',    ico:'🗺️', lbl:'Topografía'},
+    {id:'kc_aber',    ico:'📡', lbl:'Aberrometría'},
+    {id:'kc_lamp',    ico:'🔬', lbl:'Lámpara hendidura'},
+    {id:'kc_belin',   ico:'📊', lbl:'Belin-Ambrosio'},
+    {id:'kc_extra',   ico:'📷', lbl:'Foto adicional'},
+  ],
+  ls: [
+    {id:'ls_fitting1',ico:'👁️', lbl:'Fitting OD'},
+    {id:'ls_fitting2',ico:'👁️', lbl:'Fitting OI'},
+    {id:'ls_fluor1',  ico:'💚', lbl:'Fluoresc. OD'},
+    {id:'ls_fluor2',  ico:'💚', lbl:'Fluoresc. OI'},
+    {id:'ls_slit',    ico:'🔬', lbl:'Lámpara hendidura'},
+    {id:'ls_extra',   ico:'📷', lbl:'Foto adicional'},
+  ]
+};
+
+// In-memory photo store: { slotId: dataURL }
+window._photos = {};
+
+function renderPhotoSection(modId){
+  const slots = PHOTO_SLOTS[modId] || [];
+  return `
+  <div class="photo-section">
+    <div class="fl" style="font-family:'DM Mono',monospace;font-size:.58rem;text-transform:uppercase;letter-spacing:.11em;color:var(--text3);margin-bottom:10px;display:flex;align-items:center;gap:7px;">
+      <span style="content:'';width:14px;height:1px;background:var(--accent3);display:inline-block;"></span>
+      📷 Imágenes clínicas
+    </div>
+    <div class="photo-grid" id="photo-grid-${modId}">
+      ${slots.map(s=>`
+        <div class="photo-slot" id="slot-${s.id}" onclick="triggerPhoto('${s.id}','${modId}')">
+          <div class="ps-ico">${s.ico}</div>
+          <div class="ps-lbl">${s.lbl}</div>
+          <button class="ps-del" onclick="deletePhoto(event,'${s.id}','${modId}')">✕</button>
+        </div>`).join('')}
+    </div>
+    <div class="photo-count" id="photo-count-${modId}">0 imágenes</div>
+  </div>`;
+}
+
+function triggerPhoto(slotId, modId){
+  const inp = document.createElement('input');
+  inp.type = 'file';
+  inp.accept = 'image/*';
+  inp.capture = 'environment'; // rear camera on mobile
+  inp.onchange = e => {
+    const file = e.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      window._photos[slotId] = ev.target.result;
+      const slot = document.getElementById('slot-'+slotId);
+      // Remove old img if any
+      const old = slot.querySelector('img');
+      if(old) old.remove();
+      const img = document.createElement('img');
+      img.src = ev.target.result;
+      slot.insertBefore(img, slot.firstChild);
+      updatePhotoCount(modId);
+    };
+    reader.readAsDataURL(file);
+  };
+  inp.click();
+}
+
+function deletePhoto(e, slotId, modId){
+  e.stopPropagation();
+  delete window._photos[slotId];
+  const slot = document.getElementById('slot-'+slotId);
+  const img = slot.querySelector('img');
+  if(img) img.remove();
+  updatePhotoCount(modId);
+}
+
+function updatePhotoCount(modId){
+  const slots = PHOTO_SLOTS[modId] || [];
+  const count = slots.filter(s => window._photos[s.id]).length;
+  const el = document.getElementById('photo-count-'+modId);
+  if(el) el.textContent = count === 0 ? 'Sin imágenes' : `${count} imagen${count>1?'es':''} adjunta${count>1?'s':''}`;
+}
+
+function getModulePhotos(modId){
+  return (PHOTO_SLOTS[modId]||[])
+    .filter(s => window._photos[s.id])
+    .map(s => ({id:s.id, lbl:s.lbl, data:window._photos[s.id]}));
+}
+
+
 // ══════════════════════════════════════════════
 // MODULE DEFINITIONS
 // ══════════════════════════════════════════════
@@ -858,6 +1003,8 @@ function goHome(navEl){
 
 function goModule(modId, navEl){
   curMod=modId;
+  // Clear photos from previous module
+  window._photos = {};
   const m=MODULES[modId];
   document.getElementById('home').classList.remove('active');
   document.getElementById('module-container').style.display='grid';
@@ -886,6 +1033,13 @@ function goModule(modId, navEl){
         ${m.agents.map((_,i)=>`<div class="ag-line" id="ag${i}"><div class="ag-dot"></div>${m.agents[i]}</div>`).join('')}
       </div>
     </div>`;
+
+  // Inject photo section before gen-area
+  const photoDiv = document.createElement('div');
+  photoDiv.innerHTML = renderPhotoSection(modId);
+  const genArea = sb.querySelector('.gen-area');
+  sb.insertBefore(photoDiv.firstElementChild, genArea);
+  updatePhotoCount(modId);
 
   // Set today
   const fd=document.getElementById('f-fecha');
@@ -1054,6 +1208,24 @@ function exportPDF(contentId, title){
     .replace(/[\r\n]{3,}/g, '\n\n')
     .trim();
 
+  // Build photo section for PDF
+  const modPhotos = getModulePhotos(curMod);
+  const photoSection = modPhotos.length === 0 ? '' : `
+    <div style="margin-top:20px;border-top:2px solid #1a3a5c;padding-top:14px;">
+      <div style="font-family:Arial,sans-serif;font-size:8pt;font-weight:700;color:#1a3a5c;
+        text-transform:uppercase;letter-spacing:.1em;margin-bottom:10px;">
+        📷 Registro Fotográfico Clínico
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;">
+        ${modPhotos.map(p=>`
+          <div style="border:1px solid #dce8f5;border-radius:6px;overflow:hidden;">
+            <img src="${p.data}" style="width:100%;height:120px;object-fit:cover;display:block;">
+            <div style="font-family:Arial,sans-serif;font-size:7pt;color:#4a6a9c;
+              text-align:center;padding:4px;background:#f5f8fc;">${p.lbl}</div>
+          </div>`).join('')}
+      </div>
+    </div>`;
+
   const htmlContent = `<!DOCTYPE html><html><head>
 <meta charset="UTF-8">
 <title>${title}</title>
@@ -1096,6 +1268,7 @@ function exportPDF(contentId, title){
   <b>Lentesespecializados · Dr. Leonardo Orjuela · Medellín</b>
   <span>Generado con IA · Validado por el clínico · ${fecha}</span>
 </div>
+${photoSection}
 </body></html>`;
 
   // Abrir ventana de impresión → Guardar como PDF
@@ -1166,6 +1339,60 @@ function removeLogo(){
   if(el) el.remove();
 }
 
+</script>
+<script>
+if('serviceWorker' in navigator){
+  window.addEventListener('load', ()=>{
+    // Solo registrar en dominio real (no en previews)
+    const host = window.location.hostname;
+    if(host.includes('vercel.app') || host.includes('lentesespecializados')){
+      navigator.serviceWorker.register('/sw.js')
+        .then(r=>console.log('VEP SW registered ✓'))
+        .catch(e=>console.log('SW no disponible en este entorno'));
+    }
+  });
+}
+</script>
+
+<script>
+// Registrar Service Worker para PWA
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js')
+      .then(reg => console.log('[VEP] SW registrado:', reg.scope))
+      .catch(err => console.log('[VEP] SW error:', err));
+  });
+}
+
+// Handle ?modulo= en URL para shortcuts PWA
+const urlParams = new URLSearchParams(window.location.search);
+const moduloParam = urlParams.get('modulo');
+if (moduloParam && ['os','gl','kc','ls'].includes(moduloParam)) {
+  window.addEventListener('DOMContentLoaded', () => {
+    setTimeout(() => goModule(moduloParam, null), 100);
+  });
+}
+
+// Banner de instalación PWA personalizado
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  // Mostrar botón de instalación
+  const btn = document.createElement('div');
+  btn.id = 'install-btn';
+  btn.style.cssText = 'position:fixed;bottom:20px;right:20px;background:linear-gradient(135deg,#1a3a5c,#2a5298);color:#fff;padding:10px 16px;border-radius:8px;font-size:.78rem;cursor:pointer;z-index:999;box-shadow:0 4px 16px rgba(0,0,0,.3);font-family:sans-serif;display:flex;align-items:center;gap:8px;';
+  btn.innerHTML = '📲 Instalar app';
+  btn.onclick = () => {
+    btn.remove();
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then(choice => {
+      if (choice.outcome === 'accepted') showToast('✅ App instalada correctamente');
+      deferredPrompt = null;
+    });
+  };
+  document.body.appendChild(btn);
+});
 </script>
 </body>
 </html>
