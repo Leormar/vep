@@ -1448,36 +1448,38 @@ ${photoSection}
   // Detectar móvil
   const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
-  if (isMobile) {
-    // En móvil: descargar como HTML (se puede abrir y guardar como PDF desde el navegador)
-    const blob = new Blob([htmlContent], {type:'text/html;charset=utf-8'});
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = (d.nombre||'paciente').replace(/\s+/g,'_') + '_' + title.replace(/[^a-zA-Z0-9]/g,'_') + '.html';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    setTimeout(()=>URL.revokeObjectURL(url), 3000);
-    showToast('📄 Abierto — comparte o imprime para PDF');
-  } else {
-    // En desktop: abrir ventana de impresión → Guardar como PDF
-    const pw = window.open('','_blank','width=860,height=980');
-    if (pw) {
-      pw.document.write(htmlContent);
-      pw.document.close();
-      pw.onload = () => { pw.focus(); pw.print(); };
-      setTimeout(()=>{ pw.focus(); pw.print(); }, 700);
-    } else {
-      // Popup bloqueado — fallback a descarga
-      const blob = new Blob([htmlContent], {type:'text/html;charset=utf-8'});
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = (d.nombre||'paciente').replace(/\s+/g,'_') + '.html';
-      a.click();
-      showToast('📄 Descargado — abre y usa Ctrl+P para PDF');
+  // Imprimir via iframe oculto — funciona en iOS Safari, Android Chrome y Desktop
+  const printFrame = document.createElement('iframe');
+  printFrame.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;border:none;';
+  document.body.appendChild(printFrame);
+  
+  const fw = printFrame.contentWindow;
+  fw.document.open();
+  fw.document.write(htmlContent);
+  fw.document.close();
+  
+  fw.onload = () => {
+    setTimeout(() => {
+      fw.focus();
+      fw.print();
+      setTimeout(() => {
+        document.body.removeChild(printFrame);
+      }, 2000);
+    }, 500);
+  };
+  
+  // Fallback si onload no dispara
+  setTimeout(() => {
+    if (document.body.contains(printFrame)) {
+      fw.focus();
+      fw.print();
+      setTimeout(() => {
+        if(document.body.contains(printFrame)) document.body.removeChild(printFrame);
+      }, 2000);
     }
-  }
+  }, 1500);
+  
+  showToast('🖨️ Abriendo impresión — elige PDF');
 }
 
 
