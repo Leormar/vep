@@ -2,6 +2,9 @@
   "version": 2,
   "routes": [
     { "src": "/api/claude", "dest": "/api/claude.js" },
+    { "src": "/api/setup-db", "dest": "/api/setup-db.js" },
+    { "src": "/api/pacientes", "dest": "/api/pacientes.js" },
+    { "src": "/api/examenes", "dest": "/api/examenes.js" },
     { "src": "/(.*)", "dest": "/public/$1" }
   ]
 }
